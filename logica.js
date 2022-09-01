@@ -64,7 +64,7 @@ function Tarjetas(array) {
         sectionCards.innerHTML += `
         
         <div class="Card">
-          <div style="background-color:${BackgroundColors[indice]}">
+          <div class="card-background-trabajo" style="background-color:${BackgroundColors[indice]}">
             <img src="/images/icon-${titleLowerCase}.svg">
           </div>
 
