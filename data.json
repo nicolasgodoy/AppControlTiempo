@@ -37,11 +37,11 @@
     "title": "Estudio",
     "timeframes": {
       "daily": {
-        "current": 0,
+        "current": 3,
         "previous": 1
       },
       "weekly": {
-        "current": 4,
+        "current": 6,
         "previous": 7
       },
       "monthly": {
