@@ -4,198 +4,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- displays site properly based on user's device -->
-
   <link rel="icon" type="image/png" sizes="32x32" href="./images/favicon-32x32.png">
-
   <title>Control del Tiempo</title>
-
-  <!-- Feel free to remove these styles or customise in your own stylesheet 👍 -->
   <link rel="stylesheet" type="text/css" href="estilos.css" />
-  </style>
 </head>
 
 <body>
 
- 
-  
-
   <div class="Contenedor-Principal">
     
-   <h1>Control de Actividades</h1>
+    <h1>Control de Actividades</h1>
 
+    <!-- Tarjeta Principal -->
     <div class="Card-Principal">
       <div class="Contenido-Card-Principal">
-        <img class="imagen-jeremy" src="/images/fotonico_2.jpg">
+        <img class="imagen-jeremy" src="/images/image-jeremy.png">
         <div>
           <p>Reporte de Horarios</p>
           <p class="nombreUser">Nicolas Godoy</p>
         </div>
       </div>
 
-     
       <div class="Card-Principal-Fechas">
-       
         <p class="tituloDia" id="Dia">Dia</p>
         <p class="tituloMes" id="Mes">Mes</p>
-        <p class="tituloAnio"id="Anio">Año</p>
+        <p class="tituloAnio" id="Anio">Año</p>
       </div>
     </div>
 
-
-
-    <div id="sectionCards" class="Cards" >
-
-            <!-- Generando las tarjetas con Javascript -->
-
+    <!-- Contenedor de tarjetas -->
+    <div id="sectionCards" class="Cards">
       
-        <div class="Card">                  
-          <div class="card-background-trabajo">
-            <img src="/images/icon-trabajo.svg">
+      <!-- Tarjeta Trabajo -->
+      <div class="Card">
+        <div class="card-background-trabajo">
+          <img src="/images/icon-trabajo.svg">
+        </div>
+        <div class="card-detalles">
+          <div class="card-actividad">
+            <p class="Tipo-Actividad">Trabajo</p>
+            <img class="imagen-puntos" src="./images/icon-ellipsis.svg">
           </div>
-
-          <div class="card-detalles">
-            <div class="card-actividad">
-              <p class="Tipo-Actividad">Trabajo</p>
-              <img class="imagen-puntos" src="./images/icon-ellipsis.svg">
-
-            </div>
-
-            <div class="card-horas">
-              <p id="Hora" class="card-hora">0hrs</p>
-              <p id="Horas-Previa" class="horas-previas">Previuos - 7 hrs</p>
-            </div>
-
+          <div class="card-horas">
+            <p id="Hora-Trabajo" class="card-hora">0hrs</p>
+            <p id="Hora-Previa-Trabajo" class="horas-previas">Previous - 7 hrs</p>
           </div>
         </div>
+      </div>
 
-
-
-
-        <div class="Card">
-          <div class="card-background-Ejercicio">
-            <img src="/images/icon-ejercicio.svg">
+      <!-- Tarjeta Ejercicio -->
+      <div class="Card">
+        <div class="card-background-Ejercicio">
+          <img src="/images/icon-ejercicio.svg">
+        </div>
+        <div class="card-detalles">
+          <div class="card-actividad">
+            <p class="Tipo-Actividad">Ejercicio</p>
+            <img src="./images/icon-ellipsis.svg">
           </div>
-
-          <div class="card-detalles">
-            <div class="card-actividad">
-              <p class="Tipo-Actividad">Ejercicio</p>
-              <img src="./images/icon-ellipsis.svg">
-
-            </div>
-
-            <div class="card-horas">
-              <p id="Hora" class="card-hora">0hrs</p>
-              <p id="Hora-Previa" class="horas-previas">Previuos - 7 hrs</p>
-            </div>
+          <div class="card-horas">
+            <p id="Hora-Ejercicio" class="card-hora">0hrs</p>
+            <p id="Hora-Previa-Ejercicio" class="horas-previas">Previous - 7 hrs</p>
           </div>
         </div>
+      </div>
 
-
-
-
-        <div class="Card">
-          <div class="card-background-Juegos">
-            <img src="/images/icon-juegos.svg">
+      <!-- Tarjeta Juegos -->
+      <div class="Card">
+        <div class="card-background-Juegos">
+          <img src="/images/icon-juegos.svg">
+        </div>
+        <div class="card-detalles">
+          <div class="card-actividad">
+            <p class="Tipo-Actividad">Juegos</p>
+            <img src="./images/icon-ellipsis.svg">
           </div>
-
-          <div class="card-detalles">
-            <div class="card-actividad">
-              <p class="Tipo-Actividad">Juegos</p>
-              <img src="./images/icon-ellipsis.svg">
-
-            </div>
-
-            <div class="card-horas">
-              <p id="Hora" class="card-hora">0hrs</p>
-              <p id="Hora-Previa" class="horas-previas">Previuos - 7 hrs</p>
-            </div>
+          <div class="card-horas">
+            <p id="Hora-Juegos" class="card-hora">0hrs</p>
+            <p id="Hora-Previa-Juegos" class="horas-previas">Previous - 7 hrs</p>
           </div>
         </div>
+      </div>
 
-
-
-
-        <div class="Card">
-          <div class="card-background-Social">
-            <img class="card-img" src="/images/icon-social.svg">
+      <!-- Tarjeta Social -->
+      <div class="Card">
+        <div class="card-background-Social">
+          <img class="card-img" src="/images/icon-social.svg">
+        </div>
+        <div class="card-detalles">
+          <div class="card-actividad">
+            <p class="Tipo-Actividad">Social</p>
+            <img src="./images/icon-ellipsis.svg">
           </div>
-
-          <div class="card-detalles">
-            <div class="card-actividad">
-              <p class="Tipo-Actividad">Social</p>
-              <img src="./images/icon-ellipsis.svg">
-
-            </div>
-
-            <div class="card-horas">
-              <p id="Hora" class="card-hora">0hrs</p>
-              <p id="Hora-Previa" class="horas-previas">Previuos - 7 hrs</p>
-            </div>
+          <div class="card-horas">
+            <p id="Hora-Social" class="card-hora">0hrs</p>
+            <p id="Hora-Previa-Social" class="horas-previas">Previous - 7 hrs</p>
           </div>
         </div>
+      </div>
 
-
-
-
-        <div class="Card">
-          <div class="card-background-Estudio">
-            <img src="/images/icon-estudio.svg">
+      <!-- Tarjeta Estudio -->
+      <div class="Card">
+        <div class="card-background-Estudio">
+          <img src="/images/icon-estudio.svg">
+        </div>
+        <div class="card-detalles">
+          <div class="card-actividad">
+            <p class="Tipo-Actividad">Estudio</p>
+            <img src="./images/icon-ellipsis.svg">
           </div>
-
-          <div class="card-detalles">
-            <div class="card-actividad">
-              <p class="Tipo-Actividad">Estudio</p>
-              <img src="./images/icon-ellipsis.svg">
-
-            </div>
-
-            <div class="card-horas">
-              <p id="Hora" class="card-hora">0hrs</p>
-              <p id="Hora-Previa" class="horas-previas">Previuos - 7 hrs</p>
-            </div>
+          <div class="card-horas">
+            <p id="Hora-Estudio" class="card-hora">0hrs</p>
+            <p id="Hora-Previa-Estudio" class="horas-previas">Previous - 7 hrs</p>
           </div>
         </div>
+      </div>
 
-
-
-
-        <div class="Card">
-          <div class="card-background-Salud">
-            <img src="/images/icon-cuidados-personales.svg">
+      <!-- Tarjeta Salud -->
+      <div class="Card">
+        <div class="card-background-Salud">
+          <img src="/images/icon-cuidados-personales.svg">
+        </div>
+        <div class="card-detalles">
+          <div class="card-actividad">
+            <p class="Tipo-Actividad">Salud</p>
+            <img src="./images/icon-ellipsis.svg">
           </div>
-
-          <div class="card-detalles">
-            <div class="card-actividad">
-              <p class="Tipo-Actividad">Salud</p>
-              <img src="./images/icon-ellipsis.svg">
-
-            </div>
-
-            <div class="card-horas">
-              <p id="Hora" class="card-hora">0hrs</p>
-              <p id="Hora-Previa" class="horas-previas">Previuos - 7 hrs</p>
-            </div>
+          <div class="card-horas">
+            <p id="Hora-Salud" class="card-hora">0hrs</p>
+            <p id="Hora-Previa-Salud" class="horas-previas">Previous - 7 hrs</p>
           </div>
         </div>
-    </div>
+      </div>
 
+    </div> <!-- Fin de sectionCards -->
 
+  </div> <!-- Fin de Contenedor-Principal -->
 
-
-  </div>
-  </div>
-
-
-
-
-  <footer class="Contenido-Footer">
-
-
-  </footer>
-
+  <footer class="Contenido-Footer"></footer>
 
   <script type="module" src="/logica.js"></script>
+
 </body>
 
 </html>

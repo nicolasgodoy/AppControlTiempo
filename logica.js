@@ -1,7 +1,3 @@
-
-import data from './data.json' assert{type: 'json'}; // Como importar un json
-
-
 let BackgroundColors = [
     // cada color esta ordenado tal cual las posiciones de las tarjetas
     
@@ -13,58 +9,47 @@ let BackgroundColors = [
     'hsl(43, 84%, 65%)'
 ]
 
+// Cargar el JSON de forma dinámica
+fetch('./data.json')
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('No se pudo cargar el archivo JSON');
+    }
+    return response.json();
+  })
+  .then(data => {
+    // Generar los arreglos de tiempo
+    let ArregloDia = data.map(item => item.timeframes.daily);
+    let ArregloMes = data.map(item => item.timeframes.weekly);
+    let ArregloAnio = data.map(item => item.timeframes.monthly);
 
+    // Elementos del DOM
+    var sectionCards = document.querySelector('#sectionCards');
+    var DevuelveDia = document.querySelector('#Dia');
+    var DevuelveMes = document.querySelector('#Mes');
+    var DevuelveAnio = document.querySelector('#Anio');
 
+    // Asignar eventos
+    DevuelveDia.addEventListener('click', () => Tarjetas(ArregloDia, data));
+    DevuelveMes.addEventListener('click', () => Tarjetas(ArregloMes, data));
+    DevuelveAnio.addEventListener('click', () => Tarjetas(ArregloAnio, data));
 
-// queySelector Agarra el elemento html que tenga el id y devuelve el valor que le asignes por funcion etc..
+    // Cargar las tarjetas por defecto (día)
+    Tarjetas(ArregloDia, data);
+  })
+  .catch(error => console.error('Error cargando JSON:', error));
 
+// Función para renderizar las tarjetas
+function Tarjetas(array, data) {
+    sectionCards.innerHTML = ''; // Limpiar las tarjetas antes de actualizar
 
-// map va a generar un nuevo arreglo de lo que le pase en este caso item.timeframes.daily y los demas
-let ArregloDia = data.map(item => item.timeframes.daily);
-let ArregloMes = data.map(item => item.timeframes.weekly);
-let ArregloAnio = data.map(item => item.timeframes.monthly);
-
-
-var sectionCards = document.querySelector('#sectionCards')
-
-var DevuelveDia = document.querySelector('#Dia');
-DevuelveDia.addEventListener('click', () => {
-    Tarjetas(ArregloDia);
-    var cardActive = document.getElementById('')
-
-});
-
-var DevuelveMes = document.querySelector('#Mes');
-DevuelveMes.addEventListener('click', () => {
-    Tarjetas(ArregloMes);
-});
-
-var DevuelveAnio = document.querySelector('#Anio');
-DevuelveAnio.addEventListener('click', () => {
-    Tarjetas(ArregloAnio);
-});
-
-
-function Tarjetas(array) {
-    sectionCards.innerHTML = ' '; // borro los datos cuando se ingresan nuevos
-    // cambiamos data del json por array 
-    array.forEach( ( element, indice) => {
-        
+    array.forEach((element, indice) => {
         let title = data[indice].title;
-        let titleLowerCase = title.toLocaleLowerCase();
-
-       
-
-       // por en el nombre que tenemos en la imagen svg ya que contiene un espacio tenemos que hacer este condicional para que lo detecte
-       if(titleLowerCase == 'cuidados personales'){
-           titleLowerCase = 'cuidados-personales';
-       }
-       // por en el nombre que tenemos en la imagen svg ya que contiene un espacio tenemos que hacer este condicional para que lo detecte
+        let titleLowerCase = title.toLowerCase().replace(' ', '-'); // Reemplazo espacios con guiones
 
         sectionCards.innerHTML += `
-        
         <div class="Card">
-          <div class="card-background-trabajo" style="background-color:${BackgroundColors[indice]}">
+          <div class="card-background" style="background-color: ${BackgroundColors[indice]}">
             <img src="/images/icon-${titleLowerCase}.svg">
           </div>
 
@@ -72,20 +57,16 @@ function Tarjetas(array) {
             <div class="card-actividad">
               <p class="Tipo-Actividad">${title}</p>
               <img class="imagen-puntos" src="./images/icon-ellipsis.svg">
-
             </div>
 
             <div class="card-horas">
-              <p id="Hora" class="card-hora">${element.current}hs</p>
-              <p id="Horas-Previa" class="horas-previas">Previuos - ${element.previous} hrs</p>
+              <p class="card-hora">${element.current}hs</p>
+              <p class="horas-previas">Previous - ${element.previous} hrs</p>
             </div>
-
           </div>
-        </div>`
+        </div>`;
     });
 }
-
-
 
 
 
