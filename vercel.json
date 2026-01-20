@@ -1,7 +1,0 @@
-{
-    "crons": [],
-    "github": {
-        "silent": true
-    },
-    "nodeVersion": "18.x"
-}
