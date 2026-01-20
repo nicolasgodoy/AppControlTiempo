@@ -12,138 +12,86 @@
 <body>
 
   <div class="Contenedor-Principal">
-    
-    <h1>Control de Actividades</h1>
 
-    <!-- Tarjeta Principal -->
-    <div class="Card-Principal">
-      <div class="Contenido-Card-Principal">
-        <img class="imagen-jeremy" src="/images/image-jeremy.png">
-        <div>
-          <p>Reporte de Horarios</p>
-          <p class="nombreUser">Nicolas Godoy</p>
-        </div>
-      </div>
-
-      <div class="Card-Principal-Fechas">
-        <p class="tituloDia" id="Dia">Dia</p>
-        <p class="tituloMes" id="Mes">Mes</p>
-        <p class="tituloAnio" id="Anio">Año</p>
-      </div>
+    <div class="header-container">
+      <h1>Control de Actividades</h1>
+      <button id="themeToggle" class="theme-toggle" title="Cambiar tema">
+        <span class="theme-icon">🌙</span>
+      </button>
     </div>
 
-    <!-- Contenedor de tarjetas -->
-    <div id="sectionCards" class="Cards">
-      
-      <!-- Tarjeta Trabajo -->
-      <div class="Card">
-        <div class="card-background-trabajo">
-          <img src="/images/icon-trabajo.svg">
+    <!-- Contenedor principal: sidebar + tarjetas -->
+    <div class="main-content">
+      <!-- Tarjeta Principal (Sidebar izquierdo) -->
+      <div class="Card-Principal">
+        <div class="Contenido-Card-Principal">
+          <img class="imagen-jeremy" src="./images/prueba.png">
+          <div>
+            <p>Reporte de Horarios</p>
+            <p class="nombreUser">Nicolas Godoy</p>
+          </div>
         </div>
-        <div class="card-detalles">
-          <div class="card-actividad">
-            <p class="Tipo-Actividad">Trabajo</p>
-            <img class="imagen-puntos" src="./images/icon-ellipsis.svg">
-          </div>
-          <div class="card-horas">
-            <p id="Hora-Trabajo" class="card-hora">0hrs</p>
-            <p id="Hora-Previa-Trabajo" class="horas-previas">Previous - 7 hrs</p>
-          </div>
+
+        <div class="Card-Principal-Fechas">
+          <p class="tituloDia" id="Dia">Dia</p>
+          <p class="tituloMes" id="Mes">Mes</p>
+          <p class="tituloAnio" id="Anio">Año</p>
+        </div>
+
+        <div class="Card-Principal-Actions">
+          <button id="btnExport" class="btn-data-action" title="Exportar datos a JSON">
+            📥 JSON
+          </button>
+          <button id="btnExportExcel" class="btn-data-action" title="Exportar a Excel (CSV)">
+            📊 Excel
+          </button>
+          <button id="btnImport" class="btn-data-action" title="Importar datos desde JSON">
+            📤 Importar
+          </button>
+          <input type="file" id="fileInput" accept=".json" style="display: none;">
         </div>
       </div>
 
-      <!-- Tarjeta Ejercicio -->
-      <div class="Card">
-        <div class="card-background-Ejercicio">
-          <img src="/images/icon-ejercicio.svg">
+      <!-- Grid de tarjetas de actividades (3x2) -->
+      <div id="sectionCards" class="Cards">
+        <!-- Las tarjetas se generan dinámicamente -->
+      </div>
+    </div> <!-- Fin main-content -->
+
+  </div> <!-- Fin Contenedor-Principal -->
+
+  <!-- Modal para Agregar Tiempo -->
+  <div id="addTimeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Agregar Tiempo</h2>
+        <span class="modal-close">&times;</span>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-activity-name" id="modalActivityTitle">Actividad</p>
+
+        <div class="form-group">
+          <label for="hoursInput">Horas trabajadas:</label>
+          <input type="number" id="hoursInput" min="0.1" step="0.5" placeholder="Ej: 2.5" class="input-hours">
         </div>
-        <div class="card-detalles">
-          <div class="card-actividad">
-            <p class="Tipo-Actividad">Ejercicio</p>
-            <img src="./images/icon-ellipsis.svg">
-          </div>
-          <div class="card-horas">
-            <p id="Hora-Ejercicio" class="card-hora">0hrs</p>
-            <p id="Hora-Previa-Ejercicio" class="horas-previas">Previous - 7 hrs</p>
-          </div>
+
+        <div class="form-group">
+          <label for="notesInput">Notas (opcional):</label>
+          <textarea id="notesInput" rows="3" placeholder="Describe lo que hiciste..." class="input-notes"></textarea>
         </div>
       </div>
 
-      <!-- Tarjeta Juegos -->
-      <div class="Card">
-        <div class="card-background-Juegos">
-          <img src="/images/icon-juegos.svg">
-        </div>
-        <div class="card-detalles">
-          <div class="card-actividad">
-            <p class="Tipo-Actividad">Juegos</p>
-            <img src="./images/icon-ellipsis.svg">
-          </div>
-          <div class="card-horas">
-            <p id="Hora-Juegos" class="card-hora">0hrs</p>
-            <p id="Hora-Previa-Juegos" class="horas-previas">Previous - 7 hrs</p>
-          </div>
-        </div>
+      <div class="modal-footer">
+        <button id="btnCancelTime" class="btn-modal btn-cancel">Cancelar</button>
+        <button id="btnSaveTime" class="btn-modal btn-save">Guardar</button>
       </div>
-
-      <!-- Tarjeta Social -->
-      <div class="Card">
-        <div class="card-background-Social">
-          <img class="card-img" src="/images/icon-social.svg">
-        </div>
-        <div class="card-detalles">
-          <div class="card-actividad">
-            <p class="Tipo-Actividad">Social</p>
-            <img src="./images/icon-ellipsis.svg">
-          </div>
-          <div class="card-horas">
-            <p id="Hora-Social" class="card-hora">0hrs</p>
-            <p id="Hora-Previa-Social" class="horas-previas">Previous - 7 hrs</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tarjeta Estudio -->
-      <div class="Card">
-        <div class="card-background-Estudio">
-          <img src="/images/icon-estudio.svg">
-        </div>
-        <div class="card-detalles">
-          <div class="card-actividad">
-            <p class="Tipo-Actividad">Estudio</p>
-            <img src="./images/icon-ellipsis.svg">
-          </div>
-          <div class="card-horas">
-            <p id="Hora-Estudio" class="card-hora">0hrs</p>
-            <p id="Hora-Previa-Estudio" class="horas-previas">Previous - 7 hrs</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tarjeta Salud -->
-      <div class="Card">
-        <div class="card-background-Salud">
-          <img src="/images/icon-cuidados-personales.svg">
-        </div>
-        <div class="card-detalles">
-          <div class="card-actividad">
-            <p class="Tipo-Actividad">Salud</p>
-            <img src="./images/icon-ellipsis.svg">
-          </div>
-          <div class="card-horas">
-            <p id="Hora-Salud" class="card-hora">0hrs</p>
-            <p id="Hora-Previa-Salud" class="horas-previas">Previous - 7 hrs</p>
-          </div>
-        </div>
-      </div>
-
-    </div> <!-- Fin de sectionCards -->
-
-  </div> <!-- Fin de Contenedor-Principal -->
+    </div>
+  </div>
 
   <footer class="Contenido-Footer"></footer>
 
-  <script type="module" src="/logica.js"></script>
+  <script type="module" src="/js/app.js"></script>
 
 </body>
 

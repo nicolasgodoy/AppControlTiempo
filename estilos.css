@@ -1,7 +1,6 @@
-
-*{
-    padding:0;
-    margin:0;
+* {
+    padding: 0;
+    margin: 0;
     box-sizing: border-box;
 }
 
@@ -9,285 +8,407 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500&display=swap');
 
-:root{
-    --Blue: hsl(246, 80%, 60%);
+/* ========================================
+   PALETA CÁLIDA Y ENERGÉTICA
+   ======================================== */
 
-    --Orange: hsl(15, 100%, 70%);
-    --Soft-blue: hsl(195, 74%, 62%);
-    --Light-red: hsl(348, 100%, 68%);
-    --Lime-green: hsl(145, 58%, 55%);
-    --Violet: hsl(264, 64%, 52%);
-    --Soft-orange: hsl(43, 84%, 65%);
-    
-    
-    --Very-dark-blue: hsl(226, 43%, 10%);
-    --Dark-blue: hsl(235, 46%, 20%);
-    --Desaturated-blue: hsl(235, 45%, 61%);
-    --Pale-Blue: hsl(236, 100%, 87%);
-    
+:root {
+    /* Modo Oscuro (por defecto) */
+    --bg-primary: #0a0a0f;
+    /* Negro azulado muy oscuro */
+    --bg-secondary: #1a1625;
+    /* Púrpura oscuro */
+    --bg-card: #1a1625;
+    /* Fondo de tarjetas */
+
+    --primary: #f97316;
+    /* Naranja vibrante */
+    --secondary: #ef4444;
+    /* Rojo coral */
+    --accent: #f97316;
+    /* Naranja (era verde, ahora naranja) */
+
+    --text-primary: #fafaf9;
+    /* Casi blanco */
+    --text-secondary: #d4d4d8;
+    /* Gris claro */
+    --text-muted: #a1a1aa;
+    /* Gris medio */
+
+    /* Gradientes cálidos */
+    --gradient-CardPrincipal: linear-gradient(135deg, #0a0a09ed, #070606);
+    --gradient-1: linear-gradient(135deg, #b95610ed, #a55642);
+    --gradient-2: linear-gradient(135deg, #44efe7, #26cadc);
+    --gradient-3: linear-gradient(135deg, #e81919, #a13737);
+    --gradient-4: linear-gradient(135deg, #16f966, #0ceacd);
+    --gradient-5: linear-gradient(135deg, #490fbb, #673AB7);
+    --gradient-6: linear-gradient(135deg, #f8fb3c, #817a54);
 }
 
-body{
-    background-color: var(--Very-dark-blue);
+/* Modo Claro */
+body.light-mode {
+    --bg-primary: #f5f1ed;
+    /* Beige cálido suave */
+    --bg-secondary: #ebe7e3;
+    /* Beige más oscuro */
+    --bg-card: #ffffff;
+    /* Blanco puro */
+
+    --primary: #f97316;
+    /* Naranja vibrante (igual) */
+    --secondary: #ef4444;
+    /* Rojo coral (igual) */
+    --accent: #f97316;
+    /* Naranja (igual) */
+
+    --text-primary: #0a0a0a;
+    /* Gris muy oscuro (más suave que negro) */
+    --text-secondary: #5a5a5a;
+    /* Gris medio */
+    --text-muted: #8a8a8a;
+    /* Gris claro */
+
+    /* Gradientes más suaves y pasteles para modo claro */
+    --gradient-1: linear-gradient(135deg, #ffd4a3, #ffb380);
+    --gradient-2: linear-gradient(135deg, #ffb380, #ffa366);
+    --gradient-3: linear-gradient(135deg, #ffe4b3, #ffd4a3);
+    --gradient-4: linear-gradient(135deg, #ffd4a3, #ffb380);
+    --gradient-5: linear-gradient(135deg, #ffc299, #ffd4a3);
+    --gradient-6: linear-gradient(135deg, #ffe4b3, #ffc299);
+}
+
+/* Estilos específicos para modo claro */
+body.light-mode .card-hora,
+body.light-mode .horas-previas,
+body.light-mode .Tipo-Actividad {
+    color: var(--text-primary) !important;
+}
+
+body.light-mode .timer-time {
+    color: var(--text-primary) !important;
+}
+
+body.light-mode .Card-Principal-Fechas {
+    color: var(--text-secondary) !important;
+}
+
+body {
+    background-color: var(--bg-primary);
     font-size: 18px;
     font-family: 'Rubik', sans-serif;
-    color:var(--Pale-Blue);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.Contenedor-Principal{
-    display:flex;
+.Contenedor-Principal {
+    display: flex;
     flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
     align-content: center;
     width: 100%;
-    height:100vh;
-    
+    height: 100vh;
+
 }
 
-.nombreUser{
-    color:white;
+.nombreUser {
+    color: white;
     font-size: 2rem;
     text-align: center;
-   
-}
 
+}
 
 .Card-Principal {
     display: flex;
     flex-direction: column;
-    margin:15px;
-    justify-content:space-between;
-    width: 300px;
+    justify-content: space-between;
+    width: 100%;
     height: 515px;
-    background-color:var(--Blue);
-    border-radius: 10px;
-     
-
+    background: var(--gradient-CardPrincipal);
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.Contenido-Card-Principal{
-    
-    display:flex;
-    flex-direction:column;
-    justify-content: space-around;
+.Contenido-Card-Principal {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    align-content: center;
-    height: 400px;
-    
+    padding: 30px 20px;
+    gap: 10px;
 }
 
-.Card-Principal-Fechas{
-    background-color: var(--Dark-blue);
-    height: 200px;
-    display:flex;
-    align-items: center;
-    justify-content: space-around;
-    color:rgba(255, 255, 255, 0.635);
-    border-radius: 5px;
+.Contenido-Card-Principal img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.Contenido-Card-Principal p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    text-align: center;
+}
+
+.Contenido-Card-Principal h2 {
+    margin: 0;
     font-size: 1.2rem;
-    
+    font-weight: 500;
+    text-align: center;
 }
 
-.container-Cards {
-    width: 1200px;
-    
+.Card-Principal-Fechas {
+    background-color: var(--bg-secondary);
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    color: var(--text-secondary);
+    padding: 15px;
 }
 
-.Cards{
-    
-    border-radius:10px;
-    display: grid;
-    gap:15px;
-    grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: minmax(200px, auto);
-    justify-items: end;
-    
-    
+.Contenedor-Principal {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
 }
 
-h1{
+h1 {
     font-size: 2rem;
-    margin:20px;
+    margin: 0;
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 20px 0;
+}
+
+/* Contenedor principal: sidebar + grid de tarjetas */
+.main-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+/* Grid de tarjetas de actividades (3 columnas x 2 filas) */
+.Cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.theme-toggle {
+    background: var(--gradient-1);
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 6px 12px rgba(249, 115, 22, 0.4);
+}
+
+.theme-icon {
+    transition: transform 0.3s ease;
 }
 
 .Card {
-    width: 300px;
+    width: 100%;
     height: 250px;
-    display:flex;
+    display: flex;
     flex-direction: column;
-    border-radius:5px;
-    background-color: var(--Dark-blue);
+    border-radius: 10px;
+    background-color: var(--bg-card);
     overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .Card:hover {
-    background-color: var(--Pale-blue);
+    background-color: var(--bg-secondary);
+    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
+    transform: translateY(-5px);
 }
 
-.tituloDia{
+/* Contenedor de tarjetas de actividades */
+.Cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.tituloDia {
     text-align: center;
     cursor: pointer;
     width: 80px;
-    height: auto;
-    border-radius:5px;
-    padding:5px;
-    border: 1.8px solid white;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid var(--text-secondary);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
 }
 
-.tituloMes{
+.tituloMes {
     text-align: center;
     cursor: pointer;
     width: 80px;
-    height: auto;
-    border-radius:5px;
-    padding:5px;
-    border: 1.8px solid white;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid var(--text-secondary);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
 }
 
-.tituloAnio{
+.tituloAnio {
     text-align: center;
     cursor: pointer;
     width: 80px;
-    height: auto;
-    border-radius:5px;
-    padding:5px;
-    border: 1.8px solid white;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid var(--text-secondary);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
 }
 
-.tituloDia:hover{
-    background-color:var(--Blue);
-}
-.tituloMes:hover{
-    background-color:var(--Blue);
-}
-.tituloAnio:hover{
-    background-color:var(--Blue);
+.tituloDia:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
 }
 
+.tituloMes:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.tituloAnio:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
 
 
 
-.card-background-trabajo{
-    background-color: var(--Orange);
-    border-radius:10px;
+/* Card background genérico con gradiente */
+.card-background {
+    border-radius: 10px;
     height: 90px;
-    display:flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top:-15px;
-    
-}
-
-
-
-.card-background-Ejercicio{
-    background-color: var(--Lime-green);
-    border-radius:10px;
-    height: 90px;
-    display:flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top:-15px;
-}
-
-.card-background-Juegos{
-    background-color: var(--Soft-blue);
-    border-radius:10px;
-    height: 90px;
-    display:flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top:-15px;
-}
-
-.card-background-Social{
-    background-color: var(--Violet);
-    border-radius:10px;
-    height: 90px;
-    display:flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top:-15px;
-}
-
-.card-background-Estudio{
-    background-color: var(--Light-red);
-    border-radius:10px;
-    height: 90px;
-    display:flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top:-15px;
-}
-
-.card-background-Salud{
-    background-color: var(--Soft-orange);
-    border-radius:10px;
-    height: 90px;
-    display:flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top:-15px;
-}
-
-
-.card-actividad{
-    width:200px;
     display: flex;
-    justify-content:space-around;
+    justify-content: flex-end;
     align-items: center;
-    align-content: center;
-    
-   
-    
+    margin-top: -15px;
+    transition: all 0.3s ease;
 }
 
-.Tipo-Actividad{
-    color:white;
+.card-background:hover {
+    filter: brightness(1.1);
 }
 
-.card-horas{
+
+
+
+/* Nueva estructura de tarjeta: Header, Body, Footer */
+.card-detalles {
     display: flex;
-    flex-direction: row;
-    justify-content: space-around;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 160px;
+    /* Ajuste para dar espacio vertical */
+    padding: 0 24px 24px 24px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    align-content: center;
-    height:50px;
-    
+    margin-bottom: 10px;
 }
 
-.card-detalles{
-    display:flex;
-    flex-direction:column;
-    justify-content: space-around;
-    align-content: center;
-    height: 150px;
+.card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    /* Alineado a la izquierda para mejor lectura */
+    margin-bottom: 15px;
+    flex-grow: 1;
+    /* Ocupar espacio disponible */
 }
 
-.card-hora{
-    color:white;
-    font-size: 2rem;
+.card-hora {
+    color: white;
+    font-size: 3rem;
+    /* Más grande para énfasis */
+    font-weight: 300;
+    line-height: 1.1;
 }
 
-.horas-previas{
-    
-    text-align: center;
+.horas-previas {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 5px;
+    font-weight: 400;
 }
 
-.imagen-jeremy{
+.Tipo-Actividad {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.imagen-puntos {
+    cursor: pointer;
+    transition: filter 0.3s ease;
+}
+
+.imagen-puntos:hover {
+    filter: brightness(1.2);
+}
+
+.timer-display {
+    margin-top: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--accent);
+}
+
+
+.imagen-jeremy {
     width: 150px;
     height: 150px;
     border-radius: 50%;
 }
 
-.imagen-puntos{
+.imagen-puntos {
     width: 1rem;
     height: 0.5rem;
 }
 
-.Tipo-Actividad{
-    color:white;
+.Tipo-Actividad {
+    color: white;
     font-size: 1.8rem;
 }
 
@@ -297,33 +418,33 @@ h1{
 @media handheld,
 screen and (min-width: 600px) and (max-width: 1023px) {
 
-    body{
-        margin:20px;
+    body {
+        margin: 20px;
     }
 
-    h1{
-       overflow: hidden;
+    h1 {
+        overflow: hidden;
     }
 
-    .Contenedor-Principal{
-       width: 100%;
-       height: auto;
+    .Contenedor-Principal {
+        width: 100%;
+        height: auto;
     }
 
-    .Cards{
-        width:100%;
-        border-radius:10px;
+    .Cards {
+        width: 100%;
+        border-radius: 10px;
         grid-template-columns: repeat(2, 1fr);
         grid-auto-rows: minmax(150px, auto);
-        
-        
+
+
     }
-	
+
     .Card-Principal {
         width: 100%;
         height: auto;
-         
-    
+
+
     }
 
 
@@ -333,31 +454,619 @@ screen and (min-width: 600px) and (max-width: 1023px) {
 
 @media handheld,
 screen and (max-width:599px) {
-	body{
-        margin:20px;
+    body {
+        margin: 20px;
     }
 
-    h1{
+    h1 {
         font-size: 2rem;
     }
 
-    .Contenedor-Principal{
-       width: 100%;
-       height: auto;
-       flex-direction: column;
+    .Contenedor-Principal {
+        width: 100%;
+        height: auto;
+        flex-direction: column;
     }
 
-    .Cards{
+    .Cards {
         display: flex;
         flex-direction: column;
-       
+
     }
-	
+
     .Card-Principal {
         width: 300px;
         height: 350px;
-         
-    
+
+
     }
-    
+
+}
+
+/* ========================================
+   NUEVAS FUNCIONALIDADES - MANTIENE DISEÑO ORIGINAL
+   ======================================== */
+
+/* Botones de acción de datos (Exportar/Importar) */
+.Card-Principal-Actions {
+    background-color: var(--bg-secondary);
+    padding: 15px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    border-radius: 0 0 12px 12px;
+}
+
+.btn-data-action {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-data-action:hover {
+    background-color: var(--secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(249, 115, 22, 0.4);
+}
+
+/* Botón activo de período */
+.active-period {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: white !important;
+}
+
+/* Botón de agregar tiempo en las tarjetas */
+/* Botones de acción en el footer de la card */
+.card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.btn-timer,
+.btn-add-time {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    width: 100%;
+}
+
+/* Estilo específico para botón iniciar/pausar */
+.btn-timer {
+    background-color: #3b82f6;
+    /* Azul más moderno */
+    color: white;
+}
+
+.btn-timer:hover {
+    background-color: #2563eb;
+    transform: translateY(-2px);
+}
+
+/* Botón detener */
+.btn-stop {
+    background-color: var(--secondary);
+    color: white;
+}
+
+/* Botón agregar tiempo */
+.btn-add-time {
+    background-color: transparent;
+    border: 1px solid var(--text-secondary);
+    color: var(--text-primary);
+}
+
+.btn-add-time:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: white;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-add-time span {
+    display: none;
+    /* Ocultar el span grande antiguo si existe */
+}
+
+/* Menú de opciones (3 puntos) */
+.options-menu {
+    background-color: var(--bg-card);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    padding: 5px 0;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    min-width: 150px;
+}
+
+.options-menu-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.options-menu-item:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background-color: var(--Dark-blue);
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    background: var(--gradient-1);
+    padding: 20px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.modal-close {
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.modal-close:hover {
+    transform: scale(1.2);
+}
+
+.modal-body {
+    padding: 25px;
+    background-color: var(--bg-card);
+}
+
+.modal-activity-name {
+    font-size: 1.3rem;
+    color: white;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.input-hours,
+.input-notes {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--text-muted);
+    border-radius: 5px;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: 'Rubik', sans-serif;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.input-hours:focus,
+.input-notes:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.input-notes {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.modal-footer {
+    padding: 20px 25px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    border-top: 1px solid var(--Desaturated-blue);
+}
+
+.btn-modal {
+    padding: 10px 25px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel {
+    background-color: transparent;
+    color: var(--text-secondary);
+    border: 2px solid var(--text-muted);
+}
+
+.btn-cancel:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+.btn-save {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-save:hover {
+    background-color: var(--secondary);
+    transform: translateY(-2px);
+}
+
+/* Notificaciones */
+.notification {
+    position: fixed;
+    bottom: -100px;
+    right: 30px;
+    background: var(--gradient-1);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1001;
+    font-family: 'Rubik', sans-serif;
+    font-size: 1rem;
+    transition: bottom 0.3s ease;
+}
+
+.notification.show {
+    bottom: 30px;
+}
+
+/* Ajustes a las tarjetas para el nuevo botón */
+.Card {
+    height: auto;
+    min-height: 250px;
+}
+
+.card-detalles {
+    height: auto;
+    padding-bottom: 10px;
+}
+
+/* Responsive para tablets y móviles */
+@media screen and (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+
+    .Cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .Contenedor-Principal {
+        padding: 15px;
+    }
+
+    .main-content {
+        gap: 20px;
+    }
+
+    .Card-Principal {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    .Cards {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .Card {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .header-container {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px 0;
+    }
+
+    .Card-Principal {
+        height: auto;
+    }
+
+    .Card-Principal-Fechas {
+        flex-direction: column;
+        height: auto;
+        padding: 20px;
+    }
+
+    .Card-Principal-Actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================
+   TIMER STYLES
+   ======================================== */
+
+/* Display del timer */
+.timer-display {
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px var(--primary);
+    }
+
+    50% {
+        box-shadow: 0 0 15px var(--primary), 0 0 25px var(--primary);
+    }
+}
+
+.timer-icon {
+    font-size: 1.5rem;
+}
+
+.timer-time {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: white;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+}
+
+/* Botones del timer */
+.btn-timer {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    justify-content: center;
+}
+
+.btn-timer:hover {
+    transform: translateY(-2px);
+}
+
+/* Usar colores de la paleta cálida */
+.btn-start {
+    background-color: #3F51B5;
+    /* Verde para iniciar */
+}
+
+.btn-start:hover {
+    background-color: #768fff73;
+}
+
+.btn-pause {
+    background-color: var(--secondary);
+    /* Rojo coral */
+}
+
+.btn-pause:hover {
+    background-color: hsl(348, 100%, 78%);
+}
+
+.btn-resume {
+    background-color: var(--primary);
+    /* Naranja */
+}
+
+.btn-resume:hover {
+    background-color: hsl(15, 100%, 75%);
+}
+
+.btn-stop {
+    background-color: var(--secondary);
+    /* Rojo coral */
+}
+
+.btn-stop:hover {
+    background-color: hsl(348, 100%, 78%);
+}
+
+/* Mejorar layout de botones */
+.card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 15px;
+    flex-wrap: wrap;
+}
+
+.btn-add-time {
+    background-color: #ffc10700;
+    color: white;
+    border: 3px solid #F44336;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    justify-content: center;
+}
+
+.btn-add-time:hover {
+    background-color: hsl(0, 78%, 60%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Ajustes a las tarjetas */
+.Card {
+    height: auto;
+    min-height: 280px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.Card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.card-detalles {
+    height: auto;
+    padding-bottom: 15px;
+}
+
+/* Animaciones suaves */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.Card {
+    animation: fadeInUp 0.4s ease;
+}
+
+/* Mejorar Card Principal */
+.Card-Principal {
+    transition: transform 0.3s ease;
+}
+
+.Card-Principal:hover {
+    transform: translateY(-3px);
+}
+
+/* Responsive mejorado para timer */
+@media screen and (max-width: 599px) {
+    .timer-display {
+        margin: 8px 10px;
+        padding: 10px;
+    }
+
+    .timer-time {
+        font-size: 1.2rem;
+    }
+
+    .btn-timer,
+    .btn-add-time {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+
+    .card-actions {
+        gap: 6px;
+        padding: 8px 10px;
+    }
+
+    .Card {
+        min-height: 300px;
+    }
+}
+
+@media screen and (min-width: 600px) and (max-width: 1023px) {
+    .timer-display {
+        margin: 10px 12px;
+    }
+
+    .Card {
+        min-height: 290px;
+    }
 }

@@ -1,0 +1,302 @@
+/**
+ * DataManager - Gestiona los datos de actividades con LocalStorage
+ */
+class DataManager {
+    constructor() {
+        this.STORAGE_KEY = 'activity-tracker-data';
+        this.CATEGORIES_KEY = 'activity-tracker-categories';
+        this.initializeData();
+    }
+
+    /**
+     * Inicializa los datos desde LocalStorage o carga datos por defecto
+     */
+    initializeData() {
+        const storedData = this.loadFromStorage();
+        if (!storedData) {
+            // Cargar datos iniciales desde data.json
+            this.loadDefaultData();
+        }
+    }
+
+    /**
+     * Carga datos por defecto desde data.json
+     */
+    async loadDefaultData() {
+        try {
+            const response = await fetch('./data.json');
+            const data = await response.json();
+            this.saveToStorage(data);
+            return data;
+        } catch (error) {
+            console.error('Error cargando datos por defecto:', error);
+            return this.getEmptyData();
+        }
+    }
+
+    /**
+     * Obtiene estructura de datos vacía
+     */
+    getEmptyData() {
+        return [];
+    }
+
+    /**
+     * Carga datos desde LocalStorage
+     */
+    loadFromStorage() {
+        try {
+            const data = localStorage.getItem(this.STORAGE_KEY);
+            return data ? JSON.parse(data) : null;
+        } catch (error) {
+            console.error('Error cargando desde LocalStorage:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Guarda datos en LocalStorage
+     */
+    saveToStorage(data) {
+        try {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+            return true;
+        } catch (error) {
+            console.error('Error guardando en LocalStorage:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene todos los datos
+     */
+    async getData() {
+        let data = this.loadFromStorage();
+        if (!data) {
+            data = await this.loadDefaultData();
+        }
+        return data;
+    }
+
+    /**
+     * Actualiza las horas de una actividad específica
+     */
+    async updateActivityHours(activityTitle, timeframe, current, previous) {
+        const data = await this.getData();
+        const activity = data.find(item => item.title === activityTitle);
+
+        if (activity && activity.timeframes[timeframe]) {
+            activity.timeframes[timeframe].current = current;
+            activity.timeframes[timeframe].previous = previous;
+            this.saveToStorage(data);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Agrega horas a una actividad (suma a las existentes)
+     */
+    async addHoursToActivity(activityTitle, timeframe, hoursToAdd) {
+        const data = await this.getData();
+        const activity = data.find(item => item.title === activityTitle);
+
+        if (activity && activity.timeframes[timeframe]) {
+            activity.timeframes[timeframe].current += hoursToAdd;
+            this.saveToStorage(data);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Crea una nueva categoría de actividad
+     */
+    async createActivity(title, color) {
+        const data = await this.getData();
+
+        // Verificar si ya existe
+        if (data.find(item => item.title === title)) {
+            return { success: false, message: 'La actividad ya existe' };
+        }
+
+        const newActivity = {
+            title: title,
+            color: color || 'hsl(200, 50%, 50%)',
+            timeframes: {
+                daily: { current: 0, previous: 0 },
+                weekly: { current: 0, previous: 0 },
+                monthly: { current: 0, previous: 0 }
+            }
+        };
+
+        data.push(newActivity);
+        this.saveToStorage(data);
+        return { success: true, activity: newActivity };
+    }
+
+    /**
+     * Elimina una actividad
+     */
+    async deleteActivity(activityTitle) {
+        const data = await this.getData();
+        const filteredData = data.filter(item => item.title !== activityTitle);
+
+        if (filteredData.length < data.length) {
+            this.saveToStorage(filteredData);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Exporta datos a JSON
+     */
+    exportToJSON() {
+        const data = this.loadFromStorage();
+        const dataStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `activity-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Exporta datos a Excel (CSV)
+     */
+    exportToExcel() {
+        const data = this.loadFromStorage();
+
+        // Crear encabezados
+        let csv = 'Actividad,Día (Actual),Día (Anterior),Semana (Actual),Semana (Anterior),Mes (Actual),Mes (Anterior)\n';
+
+        // Agregar datos
+        data.forEach(activity => {
+            const row = [
+                activity.title,
+                activity.timeframes.daily.current,
+                activity.timeframes.daily.previous,
+                activity.timeframes.weekly.current,
+                activity.timeframes.weekly.previous,
+                activity.timeframes.monthly.current,
+                activity.timeframes.monthly.previous
+            ];
+            csv += row.join(',') + '\n';
+        });
+
+        // Crear blob y descargar
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `actividades-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Importa datos desde JSON
+     */
+    async importFromJSON(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    this.saveToStorage(data);
+                    resolve({ success: true, data });
+                } catch (error) {
+                    reject({ success: false, message: 'Error al parsear JSON' });
+                }
+            };
+
+            reader.onerror = () => {
+                reject({ success: false, message: 'Error al leer archivo' });
+            };
+
+            reader.readAsText(file);
+        });
+    }
+
+    /**
+     * Resetea todos los datos a valores por defecto
+     */
+    async resetData() {
+        localStorage.removeItem(this.STORAGE_KEY);
+        return await this.loadDefaultData();
+    }
+
+    /**
+     * Registra una sesión de tiempo (para el timer)
+     * NOTA: Esta función solo registra la sesión, NO suma las horas automáticamente
+     */
+    async logTimeSession(activityTitle, hours, date = new Date()) {
+        const sessionsKey = `${this.STORAGE_KEY}-sessions`;
+        let sessions = [];
+
+        try {
+            const stored = localStorage.getItem(sessionsKey);
+            sessions = stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            console.error('Error cargando sesiones:', error);
+        }
+
+        const session = {
+            id: Date.now(),
+            activity: activityTitle,
+            hours: hours,
+            date: date.toISOString(),
+            timestamp: Date.now()
+        };
+
+        sessions.push(session);
+        localStorage.setItem(sessionsKey, JSON.stringify(sessions));
+
+        return session;
+    }
+
+    /**
+     * Obtiene el historial de sesiones
+     */
+    getTimeSessions(activityTitle = null, startDate = null, endDate = null) {
+        const sessionsKey = `${this.STORAGE_KEY}-sessions`;
+        let sessions = [];
+
+        try {
+            const stored = localStorage.getItem(sessionsKey);
+            sessions = stored ? JSON.parse(stored) : [];
+        } catch (error) {
+            console.error('Error cargando sesiones:', error);
+            return [];
+        }
+
+        // Filtrar por actividad si se especifica
+        if (activityTitle) {
+            sessions = sessions.filter(s => s.activity === activityTitle);
+        }
+
+        // Filtrar por rango de fechas si se especifica
+        if (startDate || endDate) {
+            sessions = sessions.filter(s => {
+                const sessionDate = new Date(s.date);
+                if (startDate && sessionDate < startDate) return false;
+                if (endDate && sessionDate > endDate) return false;
+                return true;
+            });
+        }
+
+        return sessions;
+    }
+}
+
+// Exportar instancia única
+const dataManager = new DataManager();
+export default dataManager;
