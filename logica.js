@@ -1,12 +1,10 @@
 let BackgroundColors = [
-    // cada color esta ordenado tal cual las posiciones de las tarjetas
-    
-    'hsl(15, 100%, 70%)',
-    'hsl(195, 74%, 62%)',
-    'hsl(348, 100%, 68%)',
-    'hsl(145, 58%, 55%)',
-    'hsl(264, 64%, 52%)',
-    'hsl(43, 84%, 65%)'
+  'hsl(15, 100%, 70%)',
+  'hsl(195, 74%, 62%)',
+  'hsl(348, 100%, 68%)',
+  'hsl(145, 58%, 55%)',
+  'hsl(264, 64%, 52%)',
+  'hsl(43, 84%, 65%)'
 ]
 
 // Cargar el JSON de forma dinámica
@@ -41,13 +39,13 @@ fetch('./data.json')
 
 // Función para renderizar las tarjetas
 function Tarjetas(array, data) {
-    sectionCards.innerHTML = ''; // Limpiar las tarjetas antes de actualizar
+  sectionCards.innerHTML = ''; // Limpiar las tarjetas antes de actualizar
 
-    array.forEach((element, indice) => {
-        let title = data[indice].title;
-        let titleLowerCase = title.toLowerCase().replace(' ', '-'); // Reemplazo espacios con guiones
+  array.forEach((element, indice) => {
+    let title = data[indice].title;
+    let titleLowerCase = title.toLowerCase().replace(' ', '-'); // Reemplazo espacios con guiones
 
-        sectionCards.innerHTML += `
+    sectionCards.innerHTML += `
         <div class="Card">
           <div class="card-background" style="background-color: ${BackgroundColors[indice]}">
             <img src="/images/icon-${titleLowerCase}.svg">
@@ -65,7 +63,7 @@ function Tarjetas(array, data) {
             </div>
           </div>
         </div>`;
-    });
+  });
 }
 
 
