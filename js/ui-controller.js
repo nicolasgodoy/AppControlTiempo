@@ -24,10 +24,13 @@ class UIController {
     /**
      * Inicializa los event listeners
      */
+    /**
+     * Inicializa los event listeners
+     */
     initializeEventListeners() {
         // Botones de período
         const btnDay = document.querySelector('#Dia');
-        const btnWeek = document.querySelector('#Mes');
+        const btnWeek = document.querySelector('#Mes'); // IDs match HTML
         const btnMonth = document.querySelector('#Anio');
 
         if (btnDay) {
@@ -40,8 +43,46 @@ class UIController {
             btnMonth.addEventListener('click', () => this.switchTimeframe('monthly', btnMonth));
         }
 
-        // Marcar el botón activo por defecto
+        // Export/Import Buttons
+        const btnCopy = document.querySelector('#btnCopy');
+        if (btnCopy) {
+            btnCopy.addEventListener('click', async () => {
+                const success = await this.dataManager.copyToClipboard();
+                if (success) {
+                    this.showNotification('✓ Copiado. Pega (Ctrl+V) en tu hoja de cálculo');
+                } else {
+                    alert('No se pudo copiar automáticamente.');
+                }
+            });
+        }
+
+        // Marcar el botón activo por defecto (ahora search for .filter-btn)
         this.setActiveButton(btnDay);
+        // Create Activity Button
+        const btnCreateActivity = document.querySelector('#btnCreateActivity');
+        if (btnCreateActivity) {
+            btnCreateActivity.addEventListener('click', () => this.openCreateActivityModal());
+        }
+
+        // Color selection logic for Create Modal
+        const colorOptions = document.querySelectorAll('.color-option');
+        colorOptions.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                colorOptions.forEach(o => o.style.border = '2px solid transparent');
+                e.target.style.border = '2px solid white';
+                document.getElementById('newActivityColor').value = e.target.dataset.color;
+            });
+        });
+
+        // Icon selection logic
+        const iconOptions = document.querySelectorAll('.icon-option');
+        iconOptions.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                iconOptions.forEach(o => o.classList.remove('selected'));
+                e.currentTarget.classList.add('selected');
+                document.getElementById('newActivityIcon').value = e.currentTarget.dataset.icon;
+            });
+        });
     }
 
     /**
@@ -57,14 +98,14 @@ class UIController {
      * Marca el botón activo
      */
     setActiveButton(activeButton) {
-        // Remover clase activa de todos los botones
-        document.querySelectorAll('.tituloDia, .tituloMes, .tituloAnio').forEach(btn => {
-            btn.classList.remove('active-period');
+        // Remover clase activa de todos los botones de filtro
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
         });
 
         // Agregar clase activa al botón seleccionado
         if (activeButton) {
-            activeButton.classList.add('active-period');
+            activeButton.classList.add('active');
         }
     }
 
@@ -87,83 +128,126 @@ class UIController {
     }
 
     /**
-     * Crea una tarjeta de actividad
+     * Map Title to Card Gradient Class
+     */
+    getGradientClass(title, activity = {}) {
+        const map = {
+            'trabajo': 'banner-trabajo',
+            'juegos': 'banner-juego', // Fix for plural
+            'play': 'banner-juego', // Fallback for english? or alternative
+            'estudio': 'banner-estudio',
+            'study': 'banner-estudio',
+            'ejercicio': 'banner-ejercicio',
+            'exercise': 'banner-ejercicio',
+            'social': 'banner-social',
+            'auto-cuidado': 'banner-autocuidado',
+            'self care': 'banner-autocuidado',
+            'salud': 'banner-autocuidado' // Fix for specific case seen
+        };
+        const normalized = title.toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
+            .replace(/\s+/g, '-');
+
+        // Check map, then check if colorType is valid string, then fallback
+        return map[normalized] || (activity.colorType && activity.colorType !== 'undefined' ? `banner-${activity.colorType}` : 'banner-trabajo');
+    }
+
+    /**
+     * Crea una tarjeta de actividad (Updated Template)
      */
     createCard(activity, timeframe, index) {
         const card = document.createElement('div');
-        card.className = 'Card';
+
+        // Get banner gradient class
+        const bannerClass = this.getGradientClass(activity.title, activity);
+        card.className = 'card';
 
         const titleLowerCase = activity.title.toLowerCase()
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "")
             .replace(/\s+/g, '-');
 
-        const backgroundColor = this.BackgroundColors[index] || 'var(--gradient-1)';
+        // Mapeo de iconos específicos (Solo si no hay uno explicito en la actividad)
+        // Mapeo de iconos específicos (Solo si no hay uno explicito en la actividad)
+        const iconMap = {
+            'juego': 'icon-juegos.svg',
+            'auto-cuidado': 'icon-cuidados-personales.svg',
+            'juegos': 'icon-juegos.svg',
+            'play': 'icon-juegos.svg',
+            'salud': 'icon-cuidados-personales.svg' // Fallback for salud
+        };
+
+        // Use stored icon, or mapped icon, or fallback
+        const iconName = activity.icon || iconMap[titleLowerCase] || `icon-${titleLowerCase}.svg`;
 
         const hasTimer = this.timerManager.hasActiveTimer(activity.title);
         const isPaused = this.timerManager.isTimerPaused(activity.title);
 
+        const previousLabel = {
+            'daily': 'Ayer',
+            'weekly': 'Semana Pasada',
+            'monthly': 'Mes Pasado'
+        };
+
+        const currentPreviousLabel = previousLabel[this.currentTimeframe] || 'Anterior';
+
         card.innerHTML = `
-            <div class="card-background" style="background: ${backgroundColor}">
-                <img src="/images/icon-${titleLowerCase}.svg" onerror="this.style.display='none'">
+            <div class="card-banner ${bannerClass}">
+                <img src="./images/${iconName}" class="card-icon" alt="${activity.title}" onerror="this.style.display='none'">
             </div>
-
-            <div class="card-detalles">
-                <!-- Header: Título y Opciones -->
+            
+            <div class="card-content">
                 <div class="card-header">
-                    <p class="Tipo-Actividad">${activity.title}</p>
-                    <img class="imagen-puntos" src="./images/icon-ellipsis.svg" 
-                         data-activity="${activity.title}" 
-                         style="cursor: pointer;"
-                         title="Opciones">
+                    <div class="card-title">${activity.title}</div>
+                    <img src="./images/icon-ellipsis.svg" class="image-options" title="Opciones">
                 </div>
-
-                <!-- Body: Horas y Timer -->
-                <div class="card-body">
-                    <p class="card-hora">${timeframe.current.toFixed(1)}hrs</p>
-                    <p class="horas-previas">Previous - ${timeframe.previous} hrs</p>
+                
+                <div class="card-stats">
+                    <div class="card-time">${this.formatHours(timeframe.current)}hrs</div>
+                    <div class="card-previous">${currentPreviousLabel} - ${this.formatHours(timeframe.previous)} hrs</div>
                     
                     ${hasTimer ? `
                         <div class="timer-display" data-activity="${activity.title}">
-                            <span class="timer-icon">${isPaused ? '⏸️' : '⏱️'}</span>
-                            <span class="timer-time">00:00:00</span>
+                             <span>${isPaused ? '⏸️' : '⏱️'}</span>
+                             <span class="timer-time">00:00:00</span>
                         </div>
                     ` : ''}
                 </div>
 
-                <!-- Footer: Acciones -->
                 <div class="card-actions">
-                    ${!hasTimer ? `
-                        <button class="btn-timer btn-start" data-activity="${activity.title}" title="Iniciar timer">
-                            ▶️ Iniciar
+                     ${!hasTimer ? `
+                        <button class="btn btn-start" data-activity="${activity.title}">
+                            ▶ Iniciar
                         </button>
-                        <button class="btn-add-time" data-activity="${activity.title}" title="Agregar tiempo manual">
+                        <button class="btn btn-add" data-activity="${activity.title}">
                             + Agregar
                         </button>
-                    ` : `
+                     ` : `
                         ${!isPaused ? `
-                            <button class="btn-timer btn-pause" data-activity="${activity.title}" title="Pausar">
-                                ⏸️ Pausar
+                            <button class="btn btn-pause" data-activity="${activity.title}" title="Pausar">
+                                ⏸
                             </button>
                         ` : `
-                            <button class="btn-timer btn-resume" data-activity="${activity.title}" title="Reanudar">
-                                ▶️ Reanudar
+                            <button class="btn btn-resume" data-activity="${activity.title}" title="Reanudar">
+                                ▶
                             </button>
                         `}
-                        <button class="btn-timer btn-stop" data-activity="${activity.title}" title="Detener y guardar">
-                            ⏹️ Detener
+                        <button class="btn btn-stop" data-activity="${activity.title}" title="Detener">
+                            ⏹
                         </button>
-                    `}
+                     `}
                 </div>
             </div>
         `;
 
-        // Event listeners para timer
+        // Event listeners para timer (Same logic, updated classes if needed)
+        // Note: Logic below finds .btn-start, so it should work as class="btn btn-start" matches querySelector('.btn-start')
+
         const btnStart = card.querySelector('.btn-start');
         const btnPause = card.querySelector('.btn-pause');
         const btnResume = card.querySelector('.btn-resume');
         const btnStop = card.querySelector('.btn-stop');
-        const btnAddTime = card.querySelector('.btn-add-time');
+        const btnAddTime = card.querySelector('.btn-add');
 
         if (btnStart) {
             btnStart.addEventListener('click', () => this.startTimer(activity.title));
@@ -181,11 +265,13 @@ class UIController {
             btnAddTime.addEventListener('click', () => this.openAddTimeModal(activity.title));
         }
 
-        // Event listener para opciones (menú de 3 puntos)
-        const btnOptions = card.querySelector('.imagen-puntos');
-        btnOptions.addEventListener('click', (e) => {
-            this.showOptionsMenu(e, activity.title);
-        });
+        // Restore Options Menu
+        const btnOptions = card.querySelector('.image-options');
+        if (btnOptions) {
+            btnOptions.addEventListener('click', (e) => {
+                this.showOptionsMenu(e, activity.title);
+            });
+        }
 
         return card;
     }
@@ -365,9 +451,156 @@ class UIController {
     /**
      * Abre modal para editar actividad
      */
-    openEditActivityModal(activityTitle) {
-        // Por implementar en siguiente paso
-        alert('Función de edición próximamente');
+    async openEditActivityModal(activityTitle) {
+        const modal = document.getElementById('editActivityModal');
+        const modalTitle = document.getElementById('editModalActivityTitle');
+        const inputHours = document.getElementById('editHoursInput');
+
+        if (!modal || !modalTitle || !inputHours) return; // Guard clause
+
+        // Get current data
+        const data = await this.dataManager.getData();
+        const activity = data.find(a => a.title === activityTitle);
+
+        if (!activity) return;
+
+        // Populate modal
+        modalTitle.textContent = activityTitle;
+        // Pre-fill with CURRENT timeframe hours
+        const currentHours = activity.timeframes[this.currentTimeframe].current;
+        inputHours.value = currentHours;
+
+        modal.dataset.activity = activityTitle;
+        modal.style.display = 'flex';
+
+        // Setup Save/Cancel listeners (one-time setup or clean previous)
+        const btnSave = document.getElementById('btnSaveEdit');
+        const btnCancel = document.getElementById('btnCancelEdit');
+        const btnClose = modal.querySelector('.modal-close-edit');
+
+        // Helper to remove listeners and close
+        const closeEdit = () => {
+            modal.style.display = 'none';
+        };
+
+        // NOTE: A better approach for listeners is in initializeEventListeners or using 'onclick' to avoid duplicates.
+        // For now, we'll use onclick properties to ensure simple replacement without accumulation.
+
+        if (btnSave) {
+            btnSave.onclick = async () => {
+                const newHours = parseFloat(inputHours.value);
+                if (isNaN(newHours) || newHours < 0) {
+                    alert('Por favor valida las horas.');
+                    return;
+                }
+
+                // Update Data
+                activity.timeframes[this.currentTimeframe].current = newHours;
+
+                // Save
+                await this.dataManager.saveToStorage(data);
+                await this.renderCards();
+
+                this.showNotification(`✓ ${activityTitle} actualizado`);
+                closeEdit();
+            };
+        }
+
+        if (btnCancel) btnCancel.onclick = closeEdit;
+        if (btnClose) btnClose.onclick = closeEdit;
+    }
+
+    /**
+     * Opens the Create Activity Modal
+     */
+    openCreateActivityModal() {
+        const modal = document.getElementById('createActivityModal');
+        const inputName = document.getElementById('newActivityName');
+
+        if (!modal || !inputName) return;
+
+        inputName.value = '';
+        // Reset color selection
+        const colorOptions = document.querySelectorAll('.color-option');
+        colorOptions.forEach(o => o.style.border = '2px solid transparent');
+        if (colorOptions.length > 0) {
+            colorOptions[0].style.border = '2px solid white'; // Select first by default
+            document.getElementById('newActivityColor').value = colorOptions[0].dataset.color;
+        }
+
+        modal.style.display = 'flex';
+        inputName.focus();
+
+        // Default Icon Select
+        const iconOptions = document.querySelectorAll('.icon-option');
+        iconOptions.forEach(o => o.classList.remove('selected'));
+        if (iconOptions.length > 0) {
+            iconOptions[0].classList.add('selected');
+            document.getElementById('newActivityIcon').value = iconOptions[0].dataset.icon;
+        }
+
+        // Setup Buttons
+        const btnSave = document.getElementById('btnSaveCreate');
+        const btnCancel = document.getElementById('btnCancelCreate');
+        const btnClose = modal.querySelector('.modal-close-create');
+
+        const closeCreate = () => {
+            modal.style.display = 'none';
+        }
+
+        if (btnSave) {
+            btnSave.onclick = async () => {
+                await this.saveNewActivity();
+                closeCreate();
+            }
+        }
+
+        if (btnCancel) btnCancel.onclick = closeCreate;
+        if (btnClose) btnClose.onclick = closeCreate;
+    }
+
+    /**
+     * Saves the new activity
+     */
+    async saveNewActivity() {
+        const inputName = document.getElementById('newActivityName');
+        const inputColor = document.getElementById('newActivityColor');
+
+        if (!inputName || !inputName.value.trim()) {
+            alert('Por favor ingresa un nombre para la actividad.');
+            return;
+        }
+
+        const title = inputName.value.trim();
+        // Check if exists
+        const data = await this.dataManager.getData();
+        if (data.some(a => a.title.toLowerCase() === title.toLowerCase())) {
+            alert('Ya existe una actividad con este nombre.');
+            return;
+        }
+
+        // Although we can't easily save the "color type" permanently without modifying the data structure extensively (since logic uses title name),
+        // we can assume the user wants to mimic one of the existing types.
+        // However, the current logic derives class from title. `getGradientClass` uses title.
+        // To support "Colors", we might need to update `getGradientClass` to look at a stored property, OR simpler:
+        // We just add it, and if the name matches a key it gets that color, otherwise default.
+        // WAIT. The user specifically asked for "Type (Color)" selection.
+        // Meaning we need to store this preference.
+        // Update: I will modify `createCard` to handle a `type` or `color` property if it exists, or fallback to title mapping.
+
+        const newActivity = {
+            title: title,
+            colorType: inputColor.value, // New property to store the selected color theme
+            timeframes: {
+                daily: { current: 0, previous: 0 },
+                weekly: { current: 0, previous: 0 },
+                monthly: { current: 0, previous: 0 }
+            }
+        };
+
+        await this.dataManager.addActivity(newActivity); // Need to implement/ensure this exists
+        await this.renderCards();
+        this.showNotification(`✓ Actividad "${title}" creada`);
     }
 
     /**
@@ -489,6 +722,16 @@ class UIController {
             this.startTimerUpdates();
         }
     }
-}
+    /**
+     * Formats hours to prevent overflow (e.g., 2.50 or 32)
+     */
+    formatHours(hours) {
+        if (!hours) return '0';
+        // If whole number, return as is (string)
+        if (Number.isInteger(hours)) return hours.toString();
+        // If decimal, return max 2 decimals
+        return hours.toFixed(2).replace(/\.00$/, '');
+    }
 
+}
 export default UIController;

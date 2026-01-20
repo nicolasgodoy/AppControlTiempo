@@ -1,64 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Actividades</title>
   <link rel="icon" type="image/png" sizes="32x32" href="./images/favicon-32x32.png">
-  <title>Control del Tiempo</title>
   <link rel="stylesheet" type="text/css" href="estilos.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
 <body>
-
-  <div class="Contenedor-Principal">
-
-    <div class="header-container">
-      <h1>Control de Actividades</h1>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">Control de Actividades</h1>
       <button id="themeToggle" class="theme-toggle" title="Cambiar tema">
-        <span class="theme-icon">🌙</span>
+        <span class="theme-icon">☀️</span>
       </button>
     </div>
 
-    <!-- Contenedor principal: sidebar + tarjetas -->
-    <div class="main-content">
-      <!-- Tarjeta Principal (Sidebar izquierdo) -->
-      <div class="Card-Principal">
-        <div class="Contenido-Card-Principal">
-          <img class="imagen-jeremy" src="./images/prueba.png">
-          <div>
-            <p>Reporte de Horarios</p>
-            <p class="nombreUser">Nicolas Godoy</p>
+    <div class="content">
+      <div class="sidebar">
+        <div class="user-card">
+          <div class="avatar">
+            <div class="avatar-content">
+              N
+              <div class="avatar-badge">✓</div>
+            </div>
+          </div>
+          <div class="user-label">Reporte de Horarios</div>
+          <div class="user-name">Nicolas Godoy</div>
+
+          <div class="time-filters">
+            <button class="filter-btn active" id="Dia">Día</button>
+            <button class="filter-btn" id="Mes">Mes</button>
+            <button class="filter-btn" id="Anio">Año</button>
           </div>
         </div>
 
-        <div class="Card-Principal-Fechas">
-          <p class="tituloDia" id="Dia">Dia</p>
-          <p class="tituloMes" id="Mes">Mes</p>
-          <p class="tituloAnio" id="Anio">Año</p>
-        </div>
+        <div class="export-buttons">
+          <button id="btnCreateActivity" class="export-btn"
+            style="background: #ff6b35; color: white; justify-content: center; font-weight: bold;">+ Nueva
+            Actividad</button>
+          <div class="export-divider" style="height: 1px; background: rgba(255,255,255,0.1); margin: 10px 0;"></div>
 
-        <div class="Card-Principal-Actions">
-          <button id="btnExport" class="btn-data-action" title="Exportar datos a JSON">
-            📥 JSON
-          </button>
-          <button id="btnExportExcel" class="btn-data-action" title="Exportar a Excel (CSV)">
-            📊 Excel
-          </button>
-          <button id="btnImport" class="btn-data-action" title="Importar datos desde JSON">
-            📤 Importar
-          </button>
+          <button id="btnCopy" class="export-btn" style="background-color: #20e2d7; color: #1c204b; font-weight: bold;"
+            title="Copia los datos para pegarlos (Ctrl+V) en Google Sheets o Excel">📋 Copiar para Excel/Sheets</button>
+          <button id="btnImport" class="export-btn import">📥 Importar Datos</button>
           <input type="file" id="fileInput" accept=".json" style="display: none;">
         </div>
       </div>
 
-      <!-- Grid de tarjetas de actividades (3x2) -->
-      <div id="sectionCards" class="Cards">
-        <!-- Las tarjetas se generan dinámicamente -->
+      <div class="grid" id="sectionCards">
+        <!-- Cards will be injected here by JS -->
       </div>
-    </div> <!-- Fin main-content -->
-
-  </div> <!-- Fin Contenedor-Principal -->
+    </div>
+  </div>
 
   <!-- Modal para Agregar Tiempo -->
   <div id="addTimeModal" class="modal">
@@ -85,6 +82,73 @@
       <div class="modal-footer">
         <button id="btnCancelTime" class="btn-modal btn-cancel">Cancelar</button>
         <button id="btnSaveTime" class="btn-modal btn-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Modal para Editar Actividad -->
+  <div id="editActivityModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Editar Actividad</h2>
+        <span class="modal-close-edit">&times;</span>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-activity-name" id="editModalActivityTitle">Actividad</p>
+
+        <div class="form-group">
+          <label for="editHoursInput">Horas Totales (Actuales):</label>
+          <input type="number" id="editHoursInput" min="0" step="0.1" class="input-hours">
+        </div>
+
+        <p style="font-size: 12px; color: #aaa; margin-top: 10px;">
+          * Esto sobreescribirá el total de horas para el período seleccionado.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnCancelEdit" class="btn-modal btn-cancel">Cancelar</button>
+        <button id="btnSaveEdit" class="btn-modal btn-save">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Crear Actividad -->
+  <div id="createActivityModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Nueva Actividad</h2>
+        <span class="modal-close-create">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="newActivityName">Nombre de la Actividad:</label>
+          <input type="text" id="newActivityName" class="input-hours" placeholder="Ej: Lectura">
+        </div>
+        <div class="form-group">
+          <label>Tipo (Color):</label>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="color-option" data-color="trabajo"
+              style="width: 30px; height: 30px; background: linear-gradient(to right, #ff5e62, #ff9966); border-radius: 50%; border: 2px solid transparent;"></button>
+            <button type="button" class="color-option" data-color="juego"
+              style="width: 30px; height: 30px; background: linear-gradient(to right, #56CCF2, #2F80ED); border-radius: 50%; border: 2px solid transparent;"></button>
+            <button type="button" class="color-option" data-color="estudio"
+              style="width: 30px; height: 30px; background: linear-gradient(to right, #ff0844, #ffb199); border-radius: 50%; border: 2px solid transparent;"></button>
+            <button type="button" class="color-option" data-color="ejercicio"
+              style="width: 30px; height: 30px; background: linear-gradient(to right, #43e97b, #38f9d7); border-radius: 50%; border: 2px solid transparent;"></button>
+            <button type="button" class="color-option" data-color="social"
+              style="width: 30px; height: 30px; background: linear-gradient(to right, #a18cd1, #fbc2eb); border-radius: 50%; border: 2px solid transparent;"></button>
+            <button type="button" class="color-option" data-color="autocuidado"
+              style="width: 30px; height: 30px; background: linear-gradient(to right, #f6d365, #fda085); border-radius: 50%; border: 2px solid transparent;"></button>
+          </div>
+          <input type="hidden" id="newActivityColor" value="trabajo">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelCreate" class="btn-modal btn-cancel">Cancelar</button>
+        <button id="btnSaveCreate" class="btn-modal btn-save">Crear</button>
       </div>
     </div>
   </div>

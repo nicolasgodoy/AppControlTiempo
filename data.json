@@ -17,7 +17,7 @@
     }
   },
   {
-    "title": "Juegos",
+    "title": "Juego",
     "timeframes": {
       "daily": {
         "current": 1,
@@ -85,7 +85,7 @@
     }
   },
   {
-    "title": "Cuidados Personales",
+    "title": "Auto-Cuidado",
     "timeframes": {
       "daily": {
         "current": 10,

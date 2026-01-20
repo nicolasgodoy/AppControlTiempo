@@ -136,6 +136,16 @@ class DataManager {
     }
 
     /**
+     * Agrega una actividad completa directamente
+     */
+    async addActivity(activity) {
+        const data = await this.getData();
+        data.push(activity);
+        this.saveToStorage(data);
+        return true;
+    }
+
+    /**
      * Elimina una actividad
      */
     async deleteActivity(activityTitle) {
@@ -172,13 +182,53 @@ class DataManager {
     exportToExcel() {
         const data = this.loadFromStorage();
 
-        // Crear encabezados
-        let csv = 'Actividad,Día (Actual),Día (Anterior),Semana (Actual),Semana (Anterior),Mes (Actual),Mes (Anterior)\n';
+        if (typeof XLSX === 'undefined') {
+            console.error('SheetJS (XLSX) not loaded');
+            alert('Error: La librería de Excel no se ha cargado.');
+            return;
+        }
 
-        // Agregar datos
+        // Preparar datos para Excel
+        const rows = data.map(activity => ({
+            'Actividad': activity.title,
+            'Día (Actual)': activity.timeframes.daily.current,
+            'Día (Anterior)': activity.timeframes.daily.previous,
+            'Semana (Actual)': activity.timeframes.weekly.current,
+            'Semana (Anterior)': activity.timeframes.weekly.previous,
+            'Mes (Actual)': activity.timeframes.monthly.current,
+            'Mes (Anterior)': activity.timeframes.monthly.previous
+        }));
+
+        // Crear Libro y Hoja
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows);
+
+        // Auto-width columns (Optional polish)
+        const wscols = [
+            { wch: 20 }, // Actividad
+            { wch: 15 }, { wch: 15 },
+            { wch: 15 }, { wch: 15 },
+            { wch: 15 }, { wch: 15 }
+        ];
+        ws['!cols'] = wscols;
+
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte Horarios");
+
+        // Descargar archivo .xlsx real
+        XLSX.writeFile(wb, `Reporte_Actividades_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    /**
+     * Exporta datos a CSV (Compatible con Google Sheets drag-drop)
+     */
+    exportToCSV() {
+        const data = this.loadFromStorage();
+        // Encabezados con BOM para caracteres latinos
+        let csv = '\uFEFFActividad,Día (Actual),Día (Anterior),Semana (Actual),Semana (Anterior),Mes (Actual),Mes (Anterior)\n';
+
         data.forEach(activity => {
             const row = [
-                activity.title,
+                `"${activity.title}"`, // Quote contents
                 activity.timeframes.daily.current,
                 activity.timeframes.daily.previous,
                 activity.timeframes.weekly.current,
@@ -189,16 +239,57 @@ class DataManager {
             csv += row.join(',') + '\n';
         });
 
-        // Crear blob y descargar
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-
         const link = document.createElement('a');
         link.href = url;
-        link.download = `actividades-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `Reporte_Actividades_${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
-
         URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Copia datos al portapapeles (Formato TSV para pegar directo en Excel/Sheets)
+     */
+    async copyToClipboard() {
+        const data = this.loadFromStorage();
+        // Usamos TAB (\t) como separador, es lo mejor para Copiar/Pegar en Sheets
+        let tsv = 'Actividad\tDía (Actual)\tDía (Anterior)\tSemana (Actual)\tSemana (Anterior)\tMes (Actual)\tMes (Anterior)\n';
+
+        data.forEach(activity => {
+            const row = [
+                activity.title,
+                activity.timeframes.daily.current,
+                activity.timeframes.daily.previous,
+                activity.timeframes.weekly.current,
+                activity.timeframes.weekly.previous,
+                activity.timeframes.monthly.current,
+                activity.timeframes.monthly.previous
+            ];
+            tsv += row.join('\t') + '\n';
+        });
+
+        // Intentar usar API moderna, fallback a método antiguo si falla (ej: http/file protocol)
+        try {
+            await navigator.clipboard.writeText(tsv);
+            return true;
+        } catch (err) {
+            // Fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = tsv;
+            textarea.style.position = 'fixed'; // Avoid scrolling to bottom
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                return true;
+            } catch (ex) {
+                console.error('Copy failed', ex);
+                document.body.removeChild(textarea);
+                return false;
+            }
+        }
     }
 
     /**
