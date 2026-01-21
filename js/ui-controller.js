@@ -851,20 +851,21 @@ class UIController {
     async handleDeleteUser(username, event) {
         event.stopPropagation(); // Evitar que seleccione el usuario al borrar
 
-        if (confirm(`⚠️ ¿Estás seguro de que quieres eliminar a "${username}"?\n\nEsta acción borrará TODOS sus datos y actividades permanentemente.`)) {
-            const success = userManager.deleteUser(username);
+        if (confirm(`⚠️ ¿Estás seguro de que quieres eliminar a "${username}"?\n\nEsta acción borrará TODOS sus datos y actividades permanentemente en la nube.`)) {
+            const success = await this.dataManager.deleteUserInCloud(username);
             if (success) {
                 this.showNotification(`🗑️ Usuario ${username} eliminado`);
 
-                // Si borramos el usuario actual, recargar la página para limpiar todo o mostrar modal
-                if (this.dataManager.currentUser === username) {
+                // Si borramos el usuario actual, limpiar localStorage y recargar
+                if (localStorage.getItem('currentUser') === username) {
+                    localStorage.removeItem('currentUser');
                     location.reload();
                 } else {
-                    // Solo refrescar la lista
-                    this.showUserSelectionModal();
+                    // Solo refrescar la lista de usuarios en el modal
+                    await this.showUserSelectionModal();
                 }
             } else {
-                alert('No se pudo eliminar el usuario.');
+                alert('No se pudo eliminar el usuario de la nube.');
             }
         }
     }

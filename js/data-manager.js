@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
-    getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs
+    getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -55,6 +55,19 @@ class DataManager {
             return { success: true, user: { name: username } };
         } catch (error) {
             return { success: false, message: "Error al crear en Firebase" };
+        }
+    }
+
+    async deleteUserInCloud(username) {
+        if (!username) return false;
+        try {
+            const docRef = doc(db, "usuarios", username);
+            await deleteDoc(docRef);
+            console.log(`🗑️ Usuario ${username} eliminado de Firebase`);
+            return true;
+        } catch (error) {
+            console.error("Error al eliminar usuario de Firebase:", error);
+            return false;
         }
     }
 
