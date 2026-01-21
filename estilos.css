@@ -146,6 +146,34 @@ body.light-mode .avatar-badge {
     margin-bottom: 30px;
     color: white;
     line-height: 1.1;
+    position: relative;
+    /* transition: all 0.3s ease; */
+}
+
+.user-name.interactive {
+    cursor: pointer;
+    text-decoration: none;
+    /* Remove underline */
+}
+
+.user-name.interactive:hover {
+    color: #20e2d7;
+    /* Highlight color */
+    text-shadow: 0 0 10px rgba(32, 226, 215, 0.4);
+}
+
+.user-name.interactive::after {
+    content: '✏️';
+    font-size: 14px;
+    position: absolute;
+    top: -5px;
+    right: -20px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.user-name.interactive:hover::after {
+    opacity: 1;
 }
 
 body.light-mode .user-name {

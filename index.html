@@ -29,7 +29,8 @@
             </div>
           </div>
           <div class="user-label">Reporte de Horarios</div>
-          <div class="user-name">Nicolas Godoy</div>
+          <div class="user-name interactive" id="userNameLabel" title="Click para cambiar o gestionar usuarios">
+            Nicolas Godoy</div>
 
           <div class="time-filters">
             <button class="filter-btn active" id="Dia">Día</button>
@@ -149,6 +150,30 @@
       <div class="modal-footer">
         <button id="btnCancelCreate" class="btn-modal btn-cancel">Cancelar</button>
         <button id="btnSaveCreate" class="btn-modal btn-save">Crear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Selección de Usuario -->
+  <div id="userSelectionModal" class="modal" style="display: none; background-color: rgba(0,0,0,0.9);">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <div class="modal-header" style="justify-content: center;">
+        <h2>Seleccionar Usuario</h2>
+      </div>
+      <div class="modal-body">
+        <div id="userList" class="user-list"
+          style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+          <!-- User buttons injected here -->
+        </div>
+
+        <div class="divider" style="height: 1px; background: rgba(255,255,255,0.1); margin: 20px 0;"></div>
+
+        <h3>Crear Nuevo Usuario</h3>
+        <div class="form-group" style="margin-top: 10px;">
+          <input type="text" id="newUserNameInput" class="input-hours" placeholder="Nombre del usuario">
+          <button id="btnCreateUser" class="btn-modal btn-save" style="width: 100%; margin-top: 10px;">Crear y
+            Entrar</button>
+        </div>
       </div>
     </div>
   </div>

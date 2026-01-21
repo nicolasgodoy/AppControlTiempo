@@ -3,9 +3,25 @@
  */
 class DataManager {
     constructor() {
-        this.STORAGE_KEY = 'activity-tracker-data';
-        this.CATEGORIES_KEY = 'activity-tracker-categories';
+        this.BASE_STORAGE_KEY = 'activity-tracker-data';
+        this.STORAGE_KEY = this.BASE_STORAGE_KEY; // Default legacy
+        this.currentUser = null;
         this.initializeData();
+    }
+
+    /**
+     * Establece el usuario actual y recarga los datos
+     */
+    async setUser(username) {
+        this.currentUser = username;
+        // Si hay usuario, usamos postfijo, si no (null), usamos legacy o default
+        this.STORAGE_KEY = username
+            ? `${this.BASE_STORAGE_KEY}-${username}`
+            : this.BASE_STORAGE_KEY;
+
+        // Recargar datos para este usuario
+        await this.initializeData();
+        return true;
     }
 
     /**

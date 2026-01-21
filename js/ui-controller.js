@@ -2,6 +2,7 @@
  * UIController - Maneja la interfaz de usuario y las interacciones
  */
 import TimerManager from './timer-manager.js';
+import userManager from './user-manager.js';
 
 class UIController {
     constructor(dataManager) {
@@ -83,6 +84,17 @@ class UIController {
                 document.getElementById('newActivityIcon').value = e.currentTarget.dataset.icon;
             });
         });
+
+        // User Management Listeners
+        const btnCreateUser = document.getElementById('btnCreateUser');
+        if (btnCreateUser) {
+            btnCreateUser.addEventListener('click', () => this.handleCreateUser());
+        }
+
+        const userNameLabel = document.getElementById('userNameLabel');
+        if (userNameLabel) {
+            userNameLabel.addEventListener('click', () => this.showUserSelectionModal());
+        }
     }
 
     /**
@@ -715,11 +727,150 @@ class UIController {
      * Inicializa la aplicación
      */
     async initialize() {
-        await this.renderCards();
+        // En lugar de renderizar directamente, verificamos usuarios
+        const users = userManager.getUsers();
+
+        // Si no hay usuarios y es la primera vez, podríamos crear uno por defecto o migrar.
+        // Por ahora, mostraremos el modal.
+        this.showUserSelectionModal();
 
         // Iniciar actualizaciones de timer si hay timers activos
         if (this.timerManager.getAllActiveTimers().length > 0) {
             this.startTimerUpdates();
+        }
+    }
+
+    /**
+     * Muestra el modal de selección de usuario
+     */
+    showUserSelectionModal() {
+        const modal = document.getElementById('userSelectionModal');
+        const userList = document.getElementById('userList');
+
+        if (!modal || !userList) return;
+
+        userList.innerHTML = '';
+        const users = userManager.getUsers();
+
+        if (users.length === 0) {
+            userList.innerHTML = '<p style="color: #aaa; margin-bottom: 10px;">No hay usuarios. Crea uno para comenzar.</p>';
+        } else {
+            users.forEach(user => {
+                const itemContainer = document.createElement('div');
+                itemContainer.style.display = 'flex';
+                itemContainer.style.gap = '10px';
+                itemContainer.style.alignItems = 'center';
+                itemContainer.style.width = '100%';
+                itemContainer.style.marginBottom = '5px';
+
+                const btn = document.createElement('button');
+                btn.className = 'btn-modal';
+                btn.style.backgroundColor = 'var(--card-bg)';
+                btn.style.border = '1px solid var(--primary-color)';
+                btn.style.flex = '1';
+                btn.style.textAlign = 'left';
+                btn.style.padding = '15px';
+                btn.style.display = 'flex';
+                btn.style.justifyContent = 'space-between';
+                btn.style.alignItems = 'center';
+                btn.style.cursor = 'pointer';
+
+                btn.innerHTML = `
+                    <span style="font-weight: bold; color: white;">${user.name}</span>
+                    <span style="font-size: 14px; color: #aaa;">Entrar ></span>
+                `;
+
+                btn.onclick = () => this.handleUserLogin(user.name);
+
+                // Botón Eliminar
+                const btnDelete = document.createElement('button');
+                btnDelete.innerHTML = '🗑️';
+                btnDelete.title = 'Eliminar usuario';
+                btnDelete.style.background = 'rgba(255, 51, 102, 0.1)';
+                btnDelete.style.border = '1px solid rgba(255, 51, 102, 0.3)';
+                btnDelete.style.color = '#ff3366';
+                btnDelete.style.borderRadius = '8px';
+                btnDelete.style.width = '50px'; // Square-ish
+                btnDelete.style.height = '100%';
+                btnDelete.style.display = 'flex';
+                btnDelete.style.alignItems = 'center';
+                btnDelete.style.justifyContent = 'center';
+                btnDelete.style.cursor = 'pointer';
+                btnDelete.style.fontSize = '18px';
+
+                // Usamos height auto para que se adapte al contenedor flex
+                btnDelete.style.alignSelf = 'stretch';
+
+                btnDelete.onclick = (e) => this.handleDeleteUser(user.name, e);
+
+                itemContainer.appendChild(btn);
+                itemContainer.appendChild(btnDelete);
+                userList.appendChild(itemContainer);
+            });
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    /**
+     * Maneja el login de usuario
+     */
+    async handleUserLogin(username) {
+        await this.dataManager.setUser(username);
+
+        // Actualizar UI nombre
+        const userNameLabel = document.getElementById('userNameLabel');
+        if (userNameLabel) userNameLabel.textContent = username;
+
+        // Renderizar datos del usuario actual
+        await this.renderCards();
+
+        // Cerrar modal
+        const modal = document.getElementById('userSelectionModal');
+        if (modal) modal.style.display = 'none';
+
+        this.showNotification(`👋 Hola, ${username}`);
+    }
+
+    /**
+     * Maneja la eliminación de un usuario
+     */
+    async handleDeleteUser(username, event) {
+        event.stopPropagation(); // Evitar que seleccione el usuario al borrar
+
+        if (confirm(`⚠️ ¿Estás seguro de que quieres eliminar a "${username}"?\n\nEsta acción borrará TODOS sus datos y actividades permanentemente.`)) {
+            const success = userManager.deleteUser(username);
+            if (success) {
+                this.showNotification(`🗑️ Usuario ${username} eliminado`);
+
+                // Si borramos el usuario actual, recargar la página para limpiar todo o mostrar modal
+                if (this.dataManager.currentUser === username) {
+                    location.reload();
+                } else {
+                    // Solo refrescar la lista
+                    this.showUserSelectionModal();
+                }
+            } else {
+                alert('No se pudo eliminar el usuario.');
+            }
+        }
+    }
+
+    /**
+     * Crea un usuario desde el modal
+     */
+    async handleCreateUser() {
+        const input = document.getElementById('newUserNameInput');
+        if (!input) return;
+
+        const name = input.value;
+        const result = userManager.createUser(name);
+
+        if (result.success) {
+            input.value = ''; // Limpiar
+            await this.handleUserLogin(result.user.name);
+        } else {
+            alert(result.message);
         }
     }
     /**
