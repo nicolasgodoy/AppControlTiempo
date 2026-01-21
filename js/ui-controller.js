@@ -880,12 +880,68 @@ class UIController {
         if (input) input.value = '';
         if (status) status.textContent = '';
 
+        // Cargar y mostrar usuarios recientes (locales)
+        this.renderRecentUsers();
+
         modal.style.display = 'flex';
         if (input) input.focus();
 
-        // Asegurar que los botones del modal tengan los listeners actuales
-        // (En caso de que el modal haya sido manipulado dinámicamente)
         this.setupModalInteractions();
+    }
+
+    /**
+     * Renderiza la lista de usuarios que se han logueado en este navegador
+     */
+    renderRecentUsers() {
+        const recentList = document.getElementById('recentUsersList');
+        const section = document.getElementById('recentUsersSection');
+        if (!recentList || !section) return;
+
+        const users = JSON.parse(localStorage.getItem('recentUsers') || '[]');
+        const currentUser = localStorage.getItem('currentUser');
+
+        // Filtrar el usuario actual de la lista de "otros" si queremos, 
+        // o mostrarlo para que sea fácil volver a él.
+        const otherUsers = users.filter(name => name !== currentUser);
+
+        if (otherUsers.length > 0) {
+            section.style.display = 'block';
+            recentList.innerHTML = '';
+            otherUsers.forEach(username => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-modal';
+                btn.style.background = 'rgba(255,255,255,0.05)';
+                btn.style.border = '1px solid rgba(255,255,255,0.1)';
+                btn.style.color = 'white';
+                btn.style.textAlign = 'left';
+                btn.style.padding = '12px 20px';
+                btn.innerHTML = `<span>👤</span> ${username}`;
+                btn.onclick = () => this.handleUserLogin(username);
+                recentList.appendChild(btn);
+            });
+        } else {
+            section.style.display = 'none';
+        }
+    }
+
+    /**
+     * Guarda un usuario en la lista de recientes del equipo
+     */
+    saveToRecentUsers(username) {
+        let users = JSON.parse(localStorage.getItem('recentUsers') || '[]');
+        if (!users.includes(username)) {
+            users.push(username);
+            localStorage.setItem('recentUsers', JSON.stringify(users));
+        }
+    }
+
+    /**
+     * Elimina un usuario de la lista de recientes
+     */
+    removeFromRecentUsers(username) {
+        let users = JSON.parse(localStorage.getItem('recentUsers') || '[]');
+        users = users.filter(u => u !== username);
+        localStorage.setItem('recentUsers', JSON.stringify(users));
     }
 
     /**
@@ -953,6 +1009,9 @@ class UIController {
         // Persistir en local para futuras sesiones
         localStorage.setItem('currentUser', username);
 
+        // Guardar en la lista de usuarios de este equipo
+        this.saveToRecentUsers(username);
+
         // Actualizar UI nombre
         const userNameLabel = document.getElementById('userNameLabel');
         if (userNameLabel) userNameLabel.textContent = username;
@@ -988,6 +1047,9 @@ class UIController {
                 const success = await this.dataManager.deleteUserInCloud(username);
                 if (success) {
                     this.showNotification(`🗑️ Usuario ${username} eliminado`);
+
+                    // Quitar de la lista de recientes también
+                    this.removeFromRecentUsers(username);
 
                     // Limpiar sesión siempre que borramos el usuario actual
                     if (localStorage.getItem('currentUser') === username) {

@@ -185,6 +185,23 @@
           Ingresa tu nombre de usuario para cargar tus actividades.
         </p>
 
+        <div
+          style="background: rgba(255, 107, 53, 0.1); border-left: 3px solid #ff6b35; padding: 10px; margin-bottom: 20px; text-align: left;">
+          <p style="color: #ffb38a; font-size: 12px; margin: 0; line-height: 1.4;">
+            <strong>⚠️ Importante:</strong> Recordá tu nombre de usuario. Es la única forma de recuperar tus datos si
+            cambias de equipo o navegador.
+          </p>
+        </div>
+
+        <div id="recentUsersSection" style="display: none; margin-bottom: 25px;">
+          <p style="color: #aaa; font-size: 13px; margin-bottom: 10px;">Perfiles usados en este equipo:</p>
+          <div id="recentUsersList" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Botones de usuarios locales se inyectarán aquí -->
+          </div>
+          <div class="export-divider" style="height: 1px; background: rgba(255,255,255,0.1); margin: 20px 0;"></div>
+          <p style="color: #aaa; font-size: 13px;">O ingresar con uno nuevo:</p>
+        </div>
+
         <div class="form-group">
           <input type="text" id="userInputField" class="input-hours" placeholder="Nombre de usuario"
             autocomplete="username">
