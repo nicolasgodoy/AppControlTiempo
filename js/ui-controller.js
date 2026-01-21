@@ -518,7 +518,7 @@ class UIController {
                 activity.timeframes[this.currentTimeframe].current = newHours;
 
                 // Save
-                await this.dataManager.saveToStorage(data);
+                await this.dataManager.saveToCloud(data);
                 await this.renderCards();
 
                 this.showNotification(`✓ ${activityTitle} actualizado`);
@@ -731,16 +731,17 @@ class UIController {
         });
     }
 
-    /**
-     * Inicializa la aplicación
-     */
     async initialize() {
-        // En lugar de renderizar directamente, verificamos usuarios
-        const users = userManager.getUsers();
+        // Verificar si hay un usuario guardado en LocalStorage (sesión persistente)
+        const savedUser = localStorage.getItem('currentUser');
 
-        // Si no hay usuarios y es la primera vez, podríamos crear uno por defecto o migrar.
-        // Por ahora, mostraremos el modal.
-        this.showUserSelectionModal();
+        if (savedUser) {
+            console.log(`🔄 Reanudando sesión para: ${savedUser}`);
+            await this.handleUserLogin(savedUser);
+        } else {
+            // Mostrar modal de selección si no hay sesión iniciada
+            await this.showUserSelectionModal();
+        }
 
         // Iniciar actualizaciones de timer si hay timers activos
         if (this.timerManager.getAllActiveTimers().length > 0) {
@@ -748,17 +749,18 @@ class UIController {
         }
     }
 
-    /**
-     * Muestra el modal de selección de usuario
-     */
-    showUserSelectionModal() {
+    async showUserSelectionModal() {
         const modal = document.getElementById('userSelectionModal');
         const userList = document.getElementById('userList');
 
         if (!modal || !userList) return;
 
+        userList.innerHTML = '<p style="color: #aaa; margin-bottom: 10px;">Cargando usuarios desde la nube...</p>';
+
+        // Obtener usuarios directamente desde Firebase
+        const users = await this.dataManager.getAllUsersFromCloud();
+
         userList.innerHTML = '';
-        const users = userManager.getUsers();
 
         if (users.length === 0) {
             userList.innerHTML = '<p style="color: #aaa; margin-bottom: 10px;">No hay usuarios. Crea uno para comenzar.</p>';
@@ -826,6 +828,9 @@ class UIController {
     async handleUserLogin(username) {
         await this.dataManager.setUser(username);
 
+        // Persistir en local para futuras sesiones
+        localStorage.setItem('currentUser', username);
+
         // Actualizar UI nombre
         const userNameLabel = document.getElementById('userNameLabel');
         if (userNameLabel) userNameLabel.textContent = username;
@@ -869,17 +874,27 @@ class UIController {
      */
     async handleCreateUser() {
         const input = document.getElementById('newUserNameInput');
-        if (!input) return;
+        if (!input || !input.value.trim()) return;
 
-        const name = input.value;
-        const result = userManager.createUser(name);
+        const name = input.value.trim();
+
+        // Mostrar estado de carga
+        const btn = document.getElementById('btnCreateUser');
+        const originalText = btn.textContent;
+        btn.textContent = 'Creando...';
+        btn.disabled = true;
+
+        const result = await this.dataManager.createUserInCloud(name);
 
         if (result.success) {
             input.value = ''; // Limpiar
-            await this.handleUserLogin(result.user.name);
+            await this.handleUserLogin(name);
         } else {
             alert(result.message);
         }
+
+        btn.textContent = originalText;
+        btn.disabled = false;
     }
     /**
      * Formats hours to prevent overflow (e.g., 2.50 or 32)

@@ -1,5 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+    getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyA2WaLLzZliRRkBcrLE-MQ9iV0Ms6ewVdE",
@@ -17,207 +19,136 @@ const db = getFirestore(app);
 class DataManager {
     constructor() {
         this.currentUser = null;
-        this.dataCache = null; // cache en memoria
+        this.dataCache = null;
         this.unsubscribe = null;
         this.syncCallbacks = [];
     }
 
-    async setUser(username, callback) {
+    // --- GESTIÓN DE USUARIOS EN LA NUBE ---
+
+    async getAllUsersFromCloud() {
+        try {
+            const querySnapshot = await getDocs(collection(db, "usuarios"));
+            const users = [];
+            querySnapshot.forEach((doc) => {
+                users.push({ name: doc.id });
+            });
+            return users;
+        } catch (error) {
+            console.error("Error al obtener usuarios:", error);
+            return [];
+        }
+    }
+
+    async createUserInCloud(username) {
+        if (!username) return { success: false, message: "Nombre vacío" };
+        try {
+            const docRef = doc(db, "usuarios", username);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) return { success: false, message: "El usuario ya existe" };
+
+            const defaultData = await this.loadDefaultData();
+            await setDoc(docRef, {
+                actividades: defaultData,
+                createdAt: new Date().toISOString()
+            });
+            return { success: true, user: { name: username } };
+        } catch (error) {
+            return { success: false, message: "Error al crear en Firebase" };
+        }
+    }
+
+    // --- SINCRONIZACIÓN Y DATOS ---
+
+    async setUser(username) {
         this.currentUser = username;
-
-        // Creamos una "suscripción" al documento del usuario
-        const docRef = doc(db, "usuarios", this.currentUser);
-
-        // onSnapshot se ejecuta CADA VEZ que los datos cambian en la nube
-        onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const nuevasActividades = docSnap.data().actividades;
-                console.log("📱 Datos actualizados desde la nube...");
-
-                // Si le pasamos un callback (una función de la UI), actualizamos la pantalla
-                if (callback) {
-                    callback(nuevasActividades);
-                }
-            }
-        });
-
+        this.startRealtimeSync();
         return true;
     }
 
     startRealtimeSync() {
         if (!this.currentUser) return;
+        if (this.unsubscribe) this.unsubscribe();
 
         const docRef = doc(db, "usuarios", this.currentUser);
-
-        this.unsubscribe = onSnapshot(
-            docRef,
-            (docSnap) => {
-                if (docSnap.exists()) {
-                    this.dataCache = docSnap.data().actividades;
-                    console.log("✓ Datos sincronizados desde Firebase");
-                    this.notifySync();
-                }
-            },
-            (error) => {
-                console.error("Error en listener de Firestore:", error);
+        this.unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                this.dataCache = docSnap.data().actividades;
+                console.log("✓ Datos sincronizados desde Firebase");
+                this.notifySync(this.dataCache);
             }
-        );
-    }
-
-    notifySync() {
-        this.syncCallbacks.forEach(callback => {
-            try {
-                callback();
-            } catch (error) {
-                console.error("Error en callback de sincronización:", error);
-            }
+        }, (error) => {
+            console.error("Error en tiempo real:", error);
         });
     }
 
     onDataSync(callback) {
         this.syncCallbacks.push(callback);
-        return () => {
-            this.syncCallbacks = this.syncCallbacks.filter(cb => cb !== callback);
-        };
+    }
+
+    notifySync(data) {
+        this.syncCallbacks.forEach(cb => cb(data));
     }
 
     async getData() {
         if (!this.currentUser) return [];
+        if (this.dataCache) return this.dataCache;
 
-        if (this.dataCache) {
+        const docRef = doc(db, "usuarios", this.currentUser);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            this.dataCache = docSnap.data().actividades;
             return this.dataCache;
         }
-
-        try {
-            const docRef = doc(db, "usuarios", this.currentUser);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                this.dataCache = docSnap.data().actividades;
-                return this.dataCache;
-            } else {
-                const defaultData = await this.loadDefaultData();
-                await this.saveToCloud(defaultData);
-                this.dataCache = defaultData;
-                return defaultData;
-            }
-        } catch (error) {
-            console.error("Error obteniendo datos de Firebase:", error);
-            return this.dataCache || [];
-        }
+        return [];
     }
 
     async saveToCloud(data) {
         if (!this.currentUser) return false;
-
         try {
             const docRef = doc(db, "usuarios", this.currentUser);
             await setDoc(docRef, {
                 actividades: data,
                 lastUpdate: new Date().toISOString()
-            });
-
+            }, { merge: true });
             this.dataCache = data;
-            // CAMBIO AQUÍ: Usa log y quita la variable 'error' que no existe aquí
-            console.log("✅ ¡Datos guardados en la nube con éxito!");
+            console.log("✅ Guardado en la nube");
             return true;
         } catch (error) {
-            // Aquí SÍ existe la variable error
-            console.error("❌ Error guardando en Firebase:", error);
+            console.error("❌ Error al guardar:", error);
             return false;
         }
     }
+
     async loadDefaultData() {
         try {
             const response = await fetch('./data.json');
             return await response.json();
-        } catch (error) {
-            console.error("Error cargando data.json:", error);
-            return [];
-        }
+        } catch (e) { return []; }
     }
 
-    async updateActivityHours(activityTitle, timeframe, current, previous) {
-        const data = await this.getData();
-        const activity = data.find(item => item.title === activityTitle);
+    // --- ACCIONES DE ACTIVIDAD ---
 
-        if (activity && activity.timeframes[timeframe]) {
-            activity.timeframes[timeframe].current = current;
-            activity.timeframes[timeframe].previous = previous;
+    async addHoursToActivity(title, timeframe, hours) {
+        const data = await this.getData();
+        const activity = data.find(a => a.title === title);
+        if (activity) {
+            activity.timeframes[timeframe].current += hours;
             return await this.saveToCloud(data);
         }
         return false;
     }
 
-    async addHoursToActivity(activityTitle, timeframe, hoursToAdd) {
+    async deleteActivity(title) {
         const data = await this.getData();
-        const activity = data.find(item => item.title === activityTitle);
-
-        if (activity && activity.timeframes[timeframe]) {
-            activity.timeframes[timeframe].current += hoursToAdd;
-            return await this.saveToCloud(data);
-        }
-        return false;
-    }
-
-    async createActivity(title, color) {
-        const data = await this.getData();
-        if (data.find(item => item.title === title)) {
-            return { success: false, message: 'La actividad ya existe' };
-        }
-
-        const newActivity = {
-            title: title,
-            color: color || 'hsl(200, 50%, 50%)',
-            timeframes: {
-                daily: { current: 0, previous: 0 },
-                weekly: { current: 0, previous: 0 },
-                monthly: { current: 0, previous: 0 }
-            }
-        };
-
-        data.push(newActivity);
-        const success = await this.saveToCloud(data);
-        return { success, activity: newActivity };
-    }
-
-    async deleteActivity(activityTitle) {
-        const data = await this.getData();
-        const filteredData = data.filter(item => item.title !== activityTitle);
-
-        if (filteredData.length < data.length) {
-            return await this.saveToCloud(filteredData);
-        }
-        return false;
+        const filtered = data.filter(a => a.title !== title);
+        return await this.saveToCloud(filtered);
     }
 
     async addActivity(activity) {
         const data = await this.getData();
         data.push(activity);
         return await this.saveToCloud(data);
-    }
-
-    async logTimeSession(activityTitle, hours) {
-        return true;
-    }
-
-    async exportToJSON() {
-        const data = await this.getData();
-        const dataStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `backup-${this.currentUser}-${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-    }
-
-    disconnect() {
-        if (this.unsubscribe) {
-            this.unsubscribe();
-            this.unsubscribe = null;
-        }
-        this.syncCallbacks = [];
     }
 }
 
