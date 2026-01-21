@@ -91,14 +91,121 @@ class UIController {
         });
 
         // User Management Listeners
-        const btnCreateUser = document.getElementById('btnCreateUser');
-        if (btnCreateUser) {
-            btnCreateUser.addEventListener('click', () => this.handleCreateUser());
+        const btnEnterUser = document.getElementById('btnEnterUser');
+        if (btnEnterUser) {
+            btnEnterUser.addEventListener('click', () => this.handlePrivateLogin());
+        }
+
+        const btnLogout = document.getElementById('btnLogout');
+        if (btnLogout) {
+            btnLogout.addEventListener('click', () => this.handleLogout());
+        }
+
+        const btnDeleteAccount = document.getElementById('btnDeleteAccount');
+        if (btnDeleteAccount) {
+            btnDeleteAccount.addEventListener('click', (e) => {
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser) {
+                    this.handleDeleteUser(currentUser, e);
+                }
+            });
+        }
+
+        const userInputField = document.getElementById('userInputField');
+        if (userInputField) {
+            userInputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.handlePrivateLogin();
+            });
         }
 
         const userNameLabel = document.getElementById('userNameLabel');
         if (userNameLabel) {
             userNameLabel.addEventListener('click', () => this.showUserSelectionModal());
+        }
+
+        // Hours validation for existing modals
+        const hoursInput = document.getElementById('hoursInput');
+        if (hoursInput) this.setupNumericInputValidation(hoursInput, 5);
+
+        const editHoursInput = document.getElementById('editHoursInput');
+        if (editHoursInput) this.setupNumericInputValidation(editHoursInput, 5);
+    }
+
+    /**
+     * Configura validación para inputs numéricos
+     */
+    setupNumericInputValidation(input, maxLength) {
+        if (!input) return;
+
+        // Evitar caracteres no deseados en el keydown
+        input.addEventListener('keypress', (e) => {
+            const char = String.fromCharCode(e.which);
+            // Permitir números y un solo punto
+            if (!/[0-9.]/.test(char)) {
+                e.preventDefault();
+                return;
+            }
+            if (char === '.' && input.value.includes('.')) {
+                e.preventDefault();
+                return;
+            }
+        });
+
+        // Limpiar en el input (por si pegan texto) y limitar longitud
+        input.addEventListener('input', () => {
+            let val = input.value;
+            // Eliminar cualquier cosa que no sea número o punto
+            val = val.replace(/[^0-9.]/g, '');
+            // Asegurar un solo punto
+            const parts = val.split('.');
+            if (parts.length > 2) {
+                val = parts[0] + '.' + parts.slice(1).join('');
+            }
+            // Limitar longitud
+            if (val.length > maxLength) {
+                val = val.substring(0, maxLength);
+            }
+            input.value = val;
+        });
+    }
+
+    /**
+     * Maneja el ingreso privado de usuario
+     */
+    async handlePrivateLogin() {
+        const input = document.getElementById('userInputField');
+        const status = document.getElementById('loginStatus');
+        if (!input || !input.value.trim()) return;
+
+        const name = input.value.trim();
+        const btn = document.getElementById('btnEnterUser');
+
+        if (status) status.textContent = 'Verificando...';
+        if (btn) btn.disabled = true;
+
+        try {
+            // Buscamos si el usuario existe en la lista de Firebase
+            const allUsers = await this.dataManager.getAllUsersFromCloud();
+            const exists = allUsers.some(u => u.name.toLowerCase() === name.toLowerCase());
+
+            if (exists) {
+                // Si existe, entramos con el nombre correcto (case-sensitive as saved)
+                const actualName = allUsers.find(u => u.name.toLowerCase() === name.toLowerCase()).name;
+                await this.handleUserLogin(actualName);
+            } else {
+                // Si no existe, lo creamos
+                if (status) status.textContent = 'Creando nuevo perfil...';
+                const result = await this.dataManager.createUserInCloud(name);
+                if (result.success) {
+                    await this.handleUserLogin(name);
+                } else {
+                    if (status) status.textContent = 'Error: ' + result.message;
+                }
+            }
+        } catch (error) {
+            if (status) status.textContent = 'Error de conexión';
+        } finally {
+            if (btn) btn.disabled = false;
         }
     }
 
@@ -749,75 +856,68 @@ class UIController {
 
     async showUserSelectionModal() {
         const modal = document.getElementById('userSelectionModal');
-        const userList = document.getElementById('userList');
+        const input = document.getElementById('userInputField');
+        const status = document.getElementById('loginStatus');
+        const currentUserStatus = document.getElementById('currentUserStatus');
+        const loggedUserName = document.getElementById('loggedUserName');
+        const userModalTitle = document.getElementById('userModalTitle');
+        const userLoginDesc = document.getElementById('userLoginDesc');
 
-        if (!modal || !userList) return;
+        if (!modal) return;
 
-        userList.innerHTML = '<p style="color: #aaa; margin-bottom: 10px;">Cargando usuarios desde la nube...</p>';
-
-        // Obtener usuarios directamente desde Firebase
-        const users = await this.dataManager.getAllUsersFromCloud();
-
-        userList.innerHTML = '';
-
-        if (users.length === 0) {
-            userList.innerHTML = '<p style="color: #aaa; margin-bottom: 10px;">No hay usuarios. Crea uno para comenzar.</p>';
+        const currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            if (currentUserStatus) currentUserStatus.style.display = 'block';
+            if (loggedUserName) loggedUserName.textContent = currentUser;
+            if (userModalTitle) userModalTitle.textContent = "Gestionar Perfil";
+            if (userLoginDesc) userLoginDesc.style.display = 'none';
         } else {
-            users.forEach(user => {
-                const itemContainer = document.createElement('div');
-                itemContainer.style.display = 'flex';
-                itemContainer.style.gap = '10px';
-                itemContainer.style.alignItems = 'center';
-                itemContainer.style.width = '100%';
-                itemContainer.style.marginBottom = '5px';
-
-                const btn = document.createElement('button');
-                btn.className = 'btn-modal';
-                btn.style.backgroundColor = 'var(--card-bg)';
-                btn.style.border = '1px solid var(--primary-color)';
-                btn.style.flex = '1';
-                btn.style.textAlign = 'left';
-                btn.style.padding = '15px';
-                btn.style.display = 'flex';
-                btn.style.justifyContent = 'space-between';
-                btn.style.alignItems = 'center';
-                btn.style.cursor = 'pointer';
-
-                btn.innerHTML = `
-                    <span style="font-weight: bold; color: white;">${user.name}</span>
-                    <span style="font-size: 14px; color: #aaa;">Entrar ></span>
-                `;
-
-                btn.onclick = () => this.handleUserLogin(user.name);
-
-                // Botón Eliminar
-                const btnDelete = document.createElement('button');
-                btnDelete.innerHTML = '🗑️';
-                btnDelete.title = 'Eliminar usuario';
-                btnDelete.style.background = 'rgba(255, 51, 102, 0.1)';
-                btnDelete.style.border = '1px solid rgba(255, 51, 102, 0.3)';
-                btnDelete.style.color = '#ff3366';
-                btnDelete.style.borderRadius = '8px';
-                btnDelete.style.width = '50px'; // Square-ish
-                btnDelete.style.height = '100%';
-                btnDelete.style.display = 'flex';
-                btnDelete.style.alignItems = 'center';
-                btnDelete.style.justifyContent = 'center';
-                btnDelete.style.cursor = 'pointer';
-                btnDelete.style.fontSize = '18px';
-
-                // Usamos height auto para que se adapte al contenedor flex
-                btnDelete.style.alignSelf = 'stretch';
-
-                btnDelete.onclick = (e) => this.handleDeleteUser(user.name, e);
-
-                itemContainer.appendChild(btn);
-                itemContainer.appendChild(btnDelete);
-                userList.appendChild(itemContainer);
-            });
+            if (currentUserStatus) currentUserStatus.style.display = 'none';
+            if (userModalTitle) userModalTitle.textContent = "Ingresar Usuario";
+            if (userLoginDesc) userLoginDesc.style.display = 'block';
         }
 
+        if (input) input.value = '';
+        if (status) status.textContent = '';
+
         modal.style.display = 'flex';
+        if (input) input.focus();
+
+        // Asegurar que los botones del modal tengan los listeners actuales
+        // (En caso de que el modal haya sido manipulado dinámicamente)
+        this.setupModalInteractions();
+    }
+
+    /**
+     * Asegura que los botones del modal de usuario funcionen correctamente
+     */
+    setupModalInteractions() {
+        const btnLogout = document.getElementById('btnLogout');
+        const btnDeleteAccount = document.getElementById('btnDeleteAccount');
+        const btnEnterUser = document.getElementById('btnEnterUser');
+
+        if (btnLogout) {
+            btnLogout.onclick = () => this.handleLogout();
+        }
+        if (btnDeleteAccount) {
+            btnDeleteAccount.onclick = (e) => {
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser) {
+                    this.handleDeleteUser(currentUser, e);
+                }
+            };
+        }
+        if (btnEnterUser) {
+            btnEnterUser.onclick = () => this.handlePrivateLogin();
+        }
+    }
+
+    /**
+     * Cierra la sesión del usuario actual
+     */
+    handleLogout() {
+        localStorage.removeItem('currentUser');
+        location.reload();
     }
 
     /**
@@ -847,54 +947,48 @@ class UIController {
      * Maneja la eliminación de un usuario
      */
     async handleDeleteUser(username, event) {
-        event.stopPropagation(); // Evitar que seleccione el usuario al borrar
+        if (event && event.stopPropagation) event.stopPropagation();
 
-        if (confirm(`⚠️ ¿Estás seguro de que quieres eliminar a "${username}"?\n\nEsta acción borrará TODOS sus datos y actividades permanentemente en la nube.`)) {
-            const success = await this.dataManager.deleteUserInCloud(username);
-            if (success) {
-                this.showNotification(`🗑️ Usuario ${username} eliminado`);
+        const message = `⚠️ ¿Estás seguro de que quieres eliminar a "${username}"?\n\nEsta acción borrará TODOS tus datos y actividades permanentemente en la nube.`;
 
-                // Si borramos el usuario actual, limpiar localStorage y recargar
-                if (localStorage.getItem('currentUser') === username) {
-                    localStorage.removeItem('currentUser');
-                    location.reload();
+        if (confirm(message)) {
+            // Mostrar estado de carga en el botón si es posible
+            const btnDelete = document.getElementById('btnDeleteAccount');
+            const originalText = btnDelete ? btnDelete.textContent : '';
+            if (btnDelete) {
+                btnDelete.textContent = 'Eliminando...';
+                btnDelete.disabled = true;
+            }
+
+            try {
+                const success = await this.dataManager.deleteUserInCloud(username);
+                if (success) {
+                    this.showNotification(`🗑️ Usuario ${username} eliminado`);
+
+                    // Limpiar sesión siempre que borramos el usuario actual
+                    if (localStorage.getItem('currentUser') === username) {
+                        localStorage.removeItem('currentUser');
+                        location.reload();
+                    } else {
+                        await this.showUserSelectionModal();
+                    }
                 } else {
-                    // Solo refrescar la lista de usuarios en el modal
-                    await this.showUserSelectionModal();
+                    alert('No se pudo eliminar el usuario. Verifica tu conexión.');
                 }
-            } else {
-                alert('No se pudo eliminar el usuario de la nube.');
+            } catch (error) {
+                alert('Ocurrió un error inesperado al eliminar el usuario.');
+            } finally {
+                if (btnDelete) {
+                    btnDelete.textContent = originalText;
+                    btnDelete.disabled = false;
+                }
             }
         }
     }
 
     /**
-     * Crea un usuario desde el modal
+     * Ya no usamos handleCreateUser directamente, se integró en handlePrivateLogin
      */
-    async handleCreateUser() {
-        const input = document.getElementById('newUserNameInput');
-        if (!input || !input.value.trim()) return;
-
-        const name = input.value.trim();
-
-        // Mostrar estado de carga
-        const btn = document.getElementById('btnCreateUser');
-        const originalText = btn.textContent;
-        btn.textContent = 'Creando...';
-        btn.disabled = true;
-
-        const result = await this.dataManager.createUserInCloud(name);
-
-        if (result.success) {
-            input.value = ''; // Limpiar
-            await this.handleUserLogin(name);
-        } else {
-            alert(result.message);
-        }
-
-        btn.textContent = originalText;
-        btn.disabled = false;
-    }
     /**
      * Formats hours to prevent overflow (e.g., 2.50 or 32)
      */

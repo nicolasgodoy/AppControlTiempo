@@ -71,7 +71,7 @@
 
         <div class="form-group">
           <label for="hoursInput">Horas trabajadas:</label>
-          <input type="number" id="hoursInput" min="0.1" step="0.5" placeholder="Ej: 2.5" class="input-hours">
+          <input type="text" id="hoursInput" placeholder="Ej: 2.5" class="input-hours">
         </div>
 
         <div class="form-group">
@@ -101,7 +101,7 @@
 
         <div class="form-group">
           <label for="editHoursInput">Horas Totales (Actuales):</label>
-          <input type="number" id="editHoursInput" min="0" step="0.1" class="input-hours">
+          <input type="text" id="editHoursInput" class="input-hours">
         </div>
 
         <p style="font-size: 12px; color: #aaa; margin-top: 10px;">
@@ -154,26 +154,45 @@
     </div>
   </div>
 
-  <!-- Modal Selección de Usuario -->
-  <div id="userSelectionModal" class="modal" style="display: none; background-color: rgba(0,0,0,0.9);">
+  <!-- Modal Selección de Usuario (Privado) -->
+  <div id="userSelectionModal" class="modal" style="display: none; background-color: rgba(0,0,0,0.95);">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
       <div class="modal-header" style="justify-content: center;">
-        <h2>Seleccionar Usuario</h2>
+        <h2 id="userModalTitle">Ingresar Usuario</h2>
       </div>
       <div class="modal-body">
-        <div id="userList" class="user-list"
-          style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-          <!-- User buttons injected here -->
+        <div id="currentUserStatus" style="display: none; margin-bottom: 20px;">
+          <p style="color: #ccc; font-size: 14px;">Usuario actual: <strong id="loggedUserName"
+              style="color: white;"></strong></p>
+          <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="btnLogout" class="btn-modal"
+              style="flex: 1; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+              Cerrar Sesión
+            </button>
+            <button id="btnDeleteAccount" class="btn-modal"
+              style="flex: 1; background: rgba(255, 51, 102, 0.1); color: #ff3366; border: 1px solid rgba(255, 51, 102, 0.3);">
+              Eliminar Perfil
+            </button>
+          </div>
+          <div class="export-divider" style="height: 1px; background: rgba(255,255,255,0.1); margin: 25px 0 15px;">
+          </div>
+          <p style="color: #aaa; font-size: 13px;">O ingresar con otro nombre:</p>
         </div>
 
-        <div class="divider" style="height: 1px; background: rgba(255,255,255,0.1); margin: 20px 0;"></div>
+        <p id="userLoginDesc" style="color: #ccc; margin-bottom: 20px; font-size: 14px;">
+          Ingresa tu nombre de usuario para cargar tus actividades.
+        </p>
 
-        <h3>Crear Nuevo Usuario</h3>
-        <div class="form-group" style="margin-top: 10px;">
-          <input type="text" id="newUserNameInput" class="input-hours" placeholder="Nombre del usuario">
-          <button id="btnCreateUser" class="btn-modal btn-save" style="width: 100%; margin-top: 10px;">Crear y
-            Entrar</button>
+        <div class="form-group">
+          <input type="text" id="userInputField" class="input-hours" placeholder="Nombre de usuario"
+            autocomplete="username">
+          <button id="btnEnterUser" class="btn-modal btn-save"
+            style="width: 100%; margin-top: 15px; height: 50px; font-size: 16px;">
+            Ingresar / Crear
+          </button>
         </div>
+
+        <div id="loginStatus" style="margin-top: 10px; font-size: 13px; color: #ff6b35;"></div>
       </div>
     </div>
   </div>
