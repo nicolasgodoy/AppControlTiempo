@@ -22,7 +22,6 @@ class UIController {
         this.initializeEventListeners();
 
         this.dataManager.onDataSync(async (nuevosDatos) => {
-            console.log("📱 Sincronizando cambios desde la nube...");
             // Renderizamos directamente con los datos que nos envía Firebase
             await this.renderCards(nuevosDatos);
         });
@@ -736,7 +735,6 @@ class UIController {
         const savedUser = localStorage.getItem('currentUser');
 
         if (savedUser) {
-            console.log(`🔄 Reanudando sesión para: ${savedUser}`);
             await this.handleUserLogin(savedUser);
         } else {
             // Mostrar modal de selección si no hay sesión iniciada

@@ -35,7 +35,6 @@ class DataManager {
             });
             return users;
         } catch (error) {
-            console.error("Error al obtener usuarios:", error);
             return [];
         }
     }
@@ -66,7 +65,6 @@ class DataManager {
             console.log(`🗑️ Usuario ${username} eliminado de Firebase`);
             return true;
         } catch (error) {
-            console.error("Error al eliminar usuario de Firebase:", error);
             return false;
         }
     }
@@ -87,11 +85,10 @@ class DataManager {
         this.unsubscribe = onSnapshot(docRef, (docSnap) => {
             if (docSnap.exists()) {
                 this.dataCache = docSnap.data().actividades;
-                console.log("✓ Datos sincronizados desde Firebase");
                 this.notifySync(this.dataCache);
             }
         }, (error) => {
-            console.error("Error en tiempo real:", error);
+            // Error en tiempo real silenciado
         });
     }
 
@@ -125,10 +122,8 @@ class DataManager {
                 lastUpdate: new Date().toISOString()
             }, { merge: true });
             this.dataCache = data;
-            console.log("✅ Guardado en la nube");
             return true;
         } catch (error) {
-            console.error("❌ Error al guardar:", error);
             return false;
         }
     }
@@ -153,13 +148,8 @@ class DataManager {
             await updateDoc(docRef, {
                 sesiones: arrayUnion(sessionData)
             });
-            console.log("📝 Sesión registrada en el historial");
             return true;
         } catch (error) {
-            console.error("❌ Error al registrar sesión:", error);
-            // Si el documento no tiene el campo 'sesiones', setDoc con merge lo creará
-            // Pero como ya usamos updateDoc, si falla porque el doc no existe es otro tema.
-            // En este caso, el doc debe existir. Si no tiene el campo, arrayUnion lo crea.
             return false;
         }
     }

@@ -20,8 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Configurar toggle de tema
     setupThemeToggle();
-
-    console.log('✓ Aplicación inicializada correctamente');
 });
 
 /**
