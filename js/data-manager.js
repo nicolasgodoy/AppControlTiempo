@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
-    getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, deleteDoc
+    getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, deleteDoc, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -138,6 +138,30 @@ class DataManager {
             const response = await fetch('./data.json');
             return await response.json();
         } catch (e) { return []; }
+    }
+
+    async logTimeSession(activityTitle, hours) {
+        if (!this.currentUser) return false;
+        try {
+            const docRef = doc(db, "usuarios", this.currentUser);
+            const sessionData = {
+                activity: activityTitle,
+                hours: hours,
+                timestamp: new Date().toISOString()
+            };
+
+            await updateDoc(docRef, {
+                sesiones: arrayUnion(sessionData)
+            });
+            console.log("📝 Sesión registrada en el historial");
+            return true;
+        } catch (error) {
+            console.error("❌ Error al registrar sesión:", error);
+            // Si el documento no tiene el campo 'sesiones', setDoc con merge lo creará
+            // Pero como ya usamos updateDoc, si falla porque el doc no existe es otro tema.
+            // En este caso, el doc debe existir. Si no tiene el campo, arrayUnion lo crea.
+            return false;
+        }
     }
 
     // --- ACCIONES DE ACTIVIDAD ---
