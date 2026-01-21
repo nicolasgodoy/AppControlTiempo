@@ -20,7 +20,11 @@ class UIController {
             'var(--gradient-6)'    // Salud
         ];
         this.initializeEventListeners();
-        this.setupRealtimeSync();
+
+        this.dataManager.onDataSync(async () => {
+            console.log("📱 Datos actualizados desde otro dispositivo");
+            await this.renderCards();
+        });
     }
 
     /**
