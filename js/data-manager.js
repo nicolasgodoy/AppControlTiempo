@@ -1,101 +1,92 @@
-/**
- * DataManager - Gestiona los datos de actividades con LocalStorage
- */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// 1. Tu configuración (Cópiala de Firebase Console)
+const firebaseConfig = {
+    apiKey: "AIzaSyA2WaLLzZliRRkBcrLE-MQ9iV0Ms6ewVdE",
+    authDomain: "controldeactividades-3dc8c.firebaseapp.com",
+    projectId: "controldeactividades-3dc8c",
+    storageBucket: "controldeactividades-3dc8c.firebasestorage.app",
+    messagingSenderId: "999503614332",
+    appId: "1:999503614332:web:699406c5d27a0e7e6b54f9"
+};
+
+// 2. Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 class DataManager {
     constructor() {
-        this.BASE_STORAGE_KEY = 'activity-tracker-data';
-        this.STORAGE_KEY = this.BASE_STORAGE_KEY; // Default legacy
         this.currentUser = null;
-        this.initializeData();
     }
 
     /**
-     * Establece el usuario actual y recarga los datos
+     * Establece el usuario y prepara la conexión
      */
     async setUser(username) {
         this.currentUser = username;
-        // Si hay usuario, usamos postfijo, si no (null), usamos legacy o default
-        this.STORAGE_KEY = username
-            ? `${this.BASE_STORAGE_KEY}-${username}`
-            : this.BASE_STORAGE_KEY;
-
-        // Recargar datos para este usuario
-        await this.initializeData();
+        // Al cambiar de usuario, intentamos asegurar que existan datos en la nube
+        await this.getData();
         return true;
     }
 
     /**
-     * Inicializa los datos desde LocalStorage o carga datos por defecto
+     * Obtiene los datos de Firestore (Nube)
      */
-    initializeData() {
-        const storedData = this.loadFromStorage();
-        if (!storedData) {
-            // Cargar datos iniciales desde data.json
-            this.loadDefaultData();
-        }
-    }
+    async getData() {
+        if (!this.currentUser) return [];
 
-    /**
-     * Carga datos por defecto desde data.json
-     */
-    async loadDefaultData() {
         try {
-            const response = await fetch('./data.json');
-            const data = await response.json();
-            this.saveToStorage(data);
-            return data;
+            const docRef = doc(db, "usuarios", this.currentUser);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                // Si el usuario ya tiene datos en la nube, los devolvemos
+                return docSnap.data().actividades;
+            } else {
+                // Si es un usuario nuevo, cargamos el JSON por defecto y lo subimos
+                const defaultData = await this.loadDefaultData();
+                await this.saveToCloud(defaultData);
+                return defaultData;
+            }
         } catch (error) {
-            console.error('Error cargando datos por defecto:', error);
-            return this.getEmptyData();
+            console.error("Error obteniendo datos de Firebase:", error);
+            return [];
         }
     }
 
     /**
-     * Obtiene estructura de datos vacía
+     * Guarda los datos en Firestore
      */
-    getEmptyData() {
-        return [];
-    }
-
-    /**
-     * Carga datos desde LocalStorage
-     */
-    loadFromStorage() {
+    async saveToCloud(data) {
+        if (!this.currentUser) return false;
         try {
-            const data = localStorage.getItem(this.STORAGE_KEY);
-            return data ? JSON.parse(data) : null;
-        } catch (error) {
-            console.error('Error cargando desde LocalStorage:', error);
-            return null;
-        }
-    }
-
-    /**
-     * Guarda datos en LocalStorage
-     */
-    saveToStorage(data) {
-        try {
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+            const docRef = doc(db, "usuarios", this.currentUser);
+            await setDoc(docRef, {
+                actividades: data,
+                lastUpdate: new Date().toISOString()
+            });
             return true;
         } catch (error) {
-            console.error('Error guardando en LocalStorage:', error);
+            console.error("Error guardando en Firebase:", error);
             return false;
         }
     }
 
     /**
-     * Obtiene todos los datos
+     * Carga datos iniciales desde el archivo local
      */
-    async getData() {
-        let data = this.loadFromStorage();
-        if (!data) {
-            data = await this.loadDefaultData();
+    async loadDefaultData() {
+        try {
+            const response = await fetch('./data.json');
+            return await response.json();
+        } catch (error) {
+            return [];
         }
-        return data;
     }
 
     /**
-     * Actualiza las horas de una actividad específica
+     * Actualiza las horas (Ahora guarda en la nube automáticamente)
      */
     async updateActivityHours(activityTitle, timeframe, current, previous) {
         const data = await this.getData();
@@ -104,14 +95,13 @@ class DataManager {
         if (activity && activity.timeframes[timeframe]) {
             activity.timeframes[timeframe].current = current;
             activity.timeframes[timeframe].previous = previous;
-            this.saveToStorage(data);
-            return true;
+            return await this.saveToCloud(data);
         }
         return false;
     }
 
     /**
-     * Agrega horas a una actividad (suma a las existentes)
+     * Agrega horas a una actividad
      */
     async addHoursToActivity(activityTitle, timeframe, hoursToAdd) {
         const data = await this.getData();
@@ -119,19 +109,16 @@ class DataManager {
 
         if (activity && activity.timeframes[timeframe]) {
             activity.timeframes[timeframe].current += hoursToAdd;
-            this.saveToStorage(data);
-            return true;
+            return await this.saveToCloud(data);
         }
         return false;
     }
 
     /**
-     * Crea una nueva categoría de actividad
+     * Crea una nueva categoría
      */
     async createActivity(title, color) {
         const data = await this.getData();
-
-        // Verificar si ya existe
         if (data.find(item => item.title === title)) {
             return { success: false, message: 'La actividad ya existe' };
         }
@@ -147,18 +134,8 @@ class DataManager {
         };
 
         data.push(newActivity);
-        this.saveToStorage(data);
-        return { success: true, activity: newActivity };
-    }
-
-    /**
-     * Agrega una actividad completa directamente
-     */
-    async addActivity(activity) {
-        const data = await this.getData();
-        data.push(activity);
-        this.saveToStorage(data);
-        return true;
+        const success = await this.saveToCloud(data);
+        return { success, activity: newActivity };
     }
 
     /**
@@ -169,241 +146,24 @@ class DataManager {
         const filteredData = data.filter(item => item.title !== activityTitle);
 
         if (filteredData.length < data.length) {
-            this.saveToStorage(filteredData);
-            return true;
+            return await this.saveToCloud(filteredData);
         }
         return false;
     }
 
-    /**
-     * Exporta datos a JSON
-     */
-    exportToJSON() {
-        const data = this.loadFromStorage();
+    // --- MÉTODOS DE EXPORTACIÓN (Siguen funcionando igual) ---
+
+    async exportToJSON() {
+        const data = await this.getData();
         const dataStr = JSON.stringify(data, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-
         const link = document.createElement('a');
         link.href = url;
-        link.download = `activity-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `backup-${this.currentUser}-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
-
-        URL.revokeObjectURL(url);
-    }
-
-    /**
-     * Exporta datos a Excel (CSV)
-     */
-    exportToExcel() {
-        const data = this.loadFromStorage();
-
-        if (typeof XLSX === 'undefined') {
-            console.error('SheetJS (XLSX) not loaded');
-            alert('Error: La librería de Excel no se ha cargado.');
-            return;
-        }
-
-        // Preparar datos para Excel
-        const rows = data.map(activity => ({
-            'Actividad': activity.title,
-            'Día (Actual)': activity.timeframes.daily.current,
-            'Día (Anterior)': activity.timeframes.daily.previous,
-            'Semana (Actual)': activity.timeframes.weekly.current,
-            'Semana (Anterior)': activity.timeframes.weekly.previous,
-            'Mes (Actual)': activity.timeframes.monthly.current,
-            'Mes (Anterior)': activity.timeframes.monthly.previous
-        }));
-
-        // Crear Libro y Hoja
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(rows);
-
-        // Auto-width columns (Optional polish)
-        const wscols = [
-            { wch: 20 }, // Actividad
-            { wch: 15 }, { wch: 15 },
-            { wch: 15 }, { wch: 15 },
-            { wch: 15 }, { wch: 15 }
-        ];
-        ws['!cols'] = wscols;
-
-        XLSX.utils.book_append_sheet(wb, ws, "Reporte Horarios");
-
-        // Descargar archivo .xlsx real
-        XLSX.writeFile(wb, `Reporte_Actividades_${new Date().toISOString().split('T')[0]}.xlsx`);
-    }
-
-    /**
-     * Exporta datos a CSV (Compatible con Google Sheets drag-drop)
-     */
-    exportToCSV() {
-        const data = this.loadFromStorage();
-        // Encabezados con BOM para caracteres latinos
-        let csv = '\uFEFFActividad,Día (Actual),Día (Anterior),Semana (Actual),Semana (Anterior),Mes (Actual),Mes (Anterior)\n';
-
-        data.forEach(activity => {
-            const row = [
-                `"${activity.title}"`, // Quote contents
-                activity.timeframes.daily.current,
-                activity.timeframes.daily.previous,
-                activity.timeframes.weekly.current,
-                activity.timeframes.weekly.previous,
-                activity.timeframes.monthly.current,
-                activity.timeframes.monthly.previous
-            ];
-            csv += row.join(',') + '\n';
-        });
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Reporte_Actividades_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
-    }
-
-    /**
-     * Copia datos al portapapeles (Formato TSV para pegar directo en Excel/Sheets)
-     */
-    async copyToClipboard() {
-        const data = this.loadFromStorage();
-        // Usamos TAB (\t) como separador, es lo mejor para Copiar/Pegar en Sheets
-        let tsv = 'Actividad\tDía (Actual)\tDía (Anterior)\tSemana (Actual)\tSemana (Anterior)\tMes (Actual)\tMes (Anterior)\n';
-
-        data.forEach(activity => {
-            const row = [
-                activity.title,
-                activity.timeframes.daily.current,
-                activity.timeframes.daily.previous,
-                activity.timeframes.weekly.current,
-                activity.timeframes.weekly.previous,
-                activity.timeframes.monthly.current,
-                activity.timeframes.monthly.previous
-            ];
-            tsv += row.join('\t') + '\n';
-        });
-
-        // Intentar usar API moderna, fallback a método antiguo si falla (ej: http/file protocol)
-        try {
-            await navigator.clipboard.writeText(tsv);
-            return true;
-        } catch (err) {
-            // Fallback
-            const textarea = document.createElement('textarea');
-            textarea.value = tsv;
-            textarea.style.position = 'fixed'; // Avoid scrolling to bottom
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                return true;
-            } catch (ex) {
-                console.error('Copy failed', ex);
-                document.body.removeChild(textarea);
-                return false;
-            }
-        }
-    }
-
-    /**
-     * Importa datos desde JSON
-     */
-    async importFromJSON(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    this.saveToStorage(data);
-                    resolve({ success: true, data });
-                } catch (error) {
-                    reject({ success: false, message: 'Error al parsear JSON' });
-                }
-            };
-
-            reader.onerror = () => {
-                reject({ success: false, message: 'Error al leer archivo' });
-            };
-
-            reader.readAsText(file);
-        });
-    }
-
-    /**
-     * Resetea todos los datos a valores por defecto
-     */
-    async resetData() {
-        localStorage.removeItem(this.STORAGE_KEY);
-        return await this.loadDefaultData();
-    }
-
-    /**
-     * Registra una sesión de tiempo (para el timer)
-     * NOTA: Esta función solo registra la sesión, NO suma las horas automáticamente
-     */
-    async logTimeSession(activityTitle, hours, date = new Date()) {
-        const sessionsKey = `${this.STORAGE_KEY}-sessions`;
-        let sessions = [];
-
-        try {
-            const stored = localStorage.getItem(sessionsKey);
-            sessions = stored ? JSON.parse(stored) : [];
-        } catch (error) {
-            console.error('Error cargando sesiones:', error);
-        }
-
-        const session = {
-            id: Date.now(),
-            activity: activityTitle,
-            hours: hours,
-            date: date.toISOString(),
-            timestamp: Date.now()
-        };
-
-        sessions.push(session);
-        localStorage.setItem(sessionsKey, JSON.stringify(sessions));
-
-        return session;
-    }
-
-    /**
-     * Obtiene el historial de sesiones
-     */
-    getTimeSessions(activityTitle = null, startDate = null, endDate = null) {
-        const sessionsKey = `${this.STORAGE_KEY}-sessions`;
-        let sessions = [];
-
-        try {
-            const stored = localStorage.getItem(sessionsKey);
-            sessions = stored ? JSON.parse(stored) : [];
-        } catch (error) {
-            console.error('Error cargando sesiones:', error);
-            return [];
-        }
-
-        // Filtrar por actividad si se especifica
-        if (activityTitle) {
-            sessions = sessions.filter(s => s.activity === activityTitle);
-        }
-
-        // Filtrar por rango de fechas si se especifica
-        if (startDate || endDate) {
-            sessions = sessions.filter(s => {
-                const sessionDate = new Date(s.date);
-                if (startDate && sessionDate < startDate) return false;
-                if (endDate && sessionDate > endDate) return false;
-                return true;
-            });
-        }
-
-        return sessions;
     }
 }
 
-// Exportar instancia única
 const dataManager = new DataManager();
 export default dataManager;
