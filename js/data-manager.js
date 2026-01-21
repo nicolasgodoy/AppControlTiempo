@@ -110,6 +110,7 @@ class DataManager {
             });
 
             this.dataCache = data;
+            console.error("Error al guardar:", error); // <-- Esto te dirá si Firebase te bloqueó
             return true;
         } catch (error) {
             console.error("Error guardando en Firebase:", error);
