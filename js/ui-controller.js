@@ -184,18 +184,22 @@ class UIController {
         if (btn) btn.disabled = true;
 
         try {
-            // Buscamos si el usuario existe en la lista de Firebase
-            const allUsers = await this.dataManager.getAllUsersFromCloud();
-            const exists = allUsers.some(u => u.name.toLowerCase() === name.toLowerCase());
+            const metadata = await this.dataManager.getUserMetadata(name);
+            const deviceToken = this.getDeviceToken();
 
-            if (exists) {
-                // Si existe, entramos con el nombre correcto (case-sensitive as saved)
-                const actualName = allUsers.find(u => u.name.toLowerCase() === name.toLowerCase()).name;
-                await this.handleUserLogin(actualName);
+            if (metadata) {
+                // El usuario ya existe, verificamos propiedad
+                if (!metadata.ownerToken || metadata.ownerToken === deviceToken) {
+                    // Es el dueño o es un perfil viejo sin token (lo reclamamos)
+                    await this.handleUserLogin(name);
+                } else {
+                    // Pertenece a otro dispositivo
+                    if (status) status.textContent = '⚠️ Este nombre ya está registrado en otro dispositivo.';
+                }
             } else {
-                // Si no existe, lo creamos
+                // Si no existe, lo creamos enviando nuestro token de dispositivo
                 if (status) status.textContent = 'Creando nuevo perfil...';
-                const result = await this.dataManager.createUserInCloud(name);
+                const result = await this.dataManager.createUserInCloud(name, deviceToken);
                 if (result.success) {
                     await this.handleUserLogin(name);
                 } else {
@@ -207,6 +211,18 @@ class UIController {
         } finally {
             if (btn) btn.disabled = false;
         }
+    }
+
+    /**
+     * Obtiene o genera un token único para identificar este dispositivo
+     */
+    getDeviceToken() {
+        let token = localStorage.getItem('device_token');
+        if (!token) {
+            token = 'tk_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+            localStorage.setItem('device_token', token);
+        }
+        return token;
     }
 
     /**
@@ -1004,6 +1020,15 @@ class UIController {
      * Maneja el login de usuario
      */
     async handleUserLogin(username) {
+        // Antes de loguear, verificamos si tenemos el token por si el usuario se cambió manualmente en el DOM
+        const metadata = await this.dataManager.getUserMetadata(username);
+        const deviceToken = this.getDeviceToken();
+
+        if (metadata && metadata.ownerToken && metadata.ownerToken !== deviceToken) {
+            alert("Error: No tienes permiso para acceder a este perfil desde este dispositivo.");
+            return;
+        }
+
         await this.dataManager.setUser(username);
 
         // Persistir en local para futuras sesiones
@@ -1032,7 +1057,16 @@ class UIController {
     async handleDeleteUser(username, event) {
         if (event && event.stopPropagation) event.stopPropagation();
 
-        const message = `⚠️ ¿Estás seguro de que quieres eliminar a "${username}"?\n\nEsta acción borrará TODOS tus datos y actividades permanentemente en la nube.`;
+        // Verificación de tokens antes de siquiera preguntar
+        const metadata = await this.dataManager.getUserMetadata(username);
+        const deviceToken = this.getDeviceToken();
+
+        if (metadata && metadata.ownerToken && metadata.ownerToken !== deviceToken) {
+            alert("No puedes borrar este perfil porque fue creado en otro dispositivo.");
+            return;
+        }
+
+        const message = `⚠️ ¿Estás seguro de que quieres eliminar a "${username}"?`;
 
         if (confirm(message)) {
             // Mostrar estado de carga en el botón si es posible

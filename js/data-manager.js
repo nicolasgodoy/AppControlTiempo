@@ -31,7 +31,11 @@ class DataManager {
             const querySnapshot = await getDocs(collection(db, "usuarios"));
             const users = [];
             querySnapshot.forEach((doc) => {
-                users.push({ name: doc.id });
+                const data = doc.data();
+                users.push({
+                    name: doc.id,
+                    hasPin: !!data.pin
+                });
             });
             return users;
         } catch (error) {
@@ -39,7 +43,7 @@ class DataManager {
         }
     }
 
-    async createUserInCloud(username) {
+    async createUserInCloud(username, ownerToken) {
         if (!username) return { success: false, message: "Nombre vacío" };
         try {
             const docRef = doc(db, "usuarios", username);
@@ -49,6 +53,7 @@ class DataManager {
             const defaultData = await this.loadDefaultData();
             await setDoc(docRef, {
                 actividades: defaultData,
+                ownerToken: ownerToken,
                 createdAt: new Date().toISOString()
             });
             return { success: true, user: { name: username } };
@@ -56,6 +61,24 @@ class DataManager {
             return { success: false, message: "Error al crear en Firebase" };
         }
     }
+
+    async getUserMetadata(username) {
+        if (!username) return null;
+        try {
+            const docRef = doc(db, "usuarios", username);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                return {
+                    ownerToken: data.ownerToken || null
+                };
+            }
+            return null;
+        } catch (error) {
+            return null;
+        }
+    }
+
 
     async deleteUserInCloud(username) {
         if (!username) return false;
