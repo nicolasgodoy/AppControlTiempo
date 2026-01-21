@@ -443,7 +443,8 @@ class UIController {
             activity.timeframes.weekly = { current: 0, previous: 0 };
             activity.timeframes.monthly = { current: 0, previous: 0 };
 
-            this.dataManager.saveToStorage(data);
+            // this.dataManager.saveToStorage(data); LOCAL
+            await this.dataManager.saveToCloud(data); // NUBE CON FIREBASE
             await this.renderCards();
             this.showNotification(`✓ ${activityTitle} reseteada`);
         }
