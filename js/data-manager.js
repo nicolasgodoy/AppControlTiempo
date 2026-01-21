@@ -8,7 +8,8 @@ const firebaseConfig = {
     projectId: "controldeactividades-3dc8c",
     storageBucket: "controldeactividades-3dc8c.firebasestorage.app",
     messagingSenderId: "999503614332",
-    appId: "1:999503614332:web:699406c5d27a0e7e6b54f9"
+    appId: "1:999503614332:web:699406c5d27a0e7e6b54f9",
+    measurementId: "G-H65NY0Q1QC"
 };
 
 // 2. Inicializar Firebase
@@ -162,6 +163,15 @@ class DataManager {
         link.href = url;
         link.download = `backup-${this.currentUser}-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
+    }
+
+    /**
+ * Registra una sesión de tiempo (opcional, para historial)
+ */
+    async logTimeSession(activityTitle, hours) {
+        // Por ahora, solo guardamos los datos principales
+        // Si quieres historial detallado, necesitarías una colección extra
+        return true;
     }
 }
 
