@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 1. Tu configuración (Cópiala de Firebase Console)
 const firebaseConfig = {
     apiKey: "AIzaSyA2WaLLzZliRRkBcrLE-MQ9iV0Ms6ewVdE",
     authDomain: "controldeactividades-3dc8c.firebaseapp.com",
@@ -12,40 +11,72 @@ const firebaseConfig = {
     measurementId: "G-H65NY0Q1QC"
 };
 
-// 2. Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 class DataManager {
     constructor() {
         this.currentUser = null;
-        this.dataCache = null; // Cache en memoria
-        this.lastFetch = 0;
-        this.cacheDuration = 3000; // 3 segundos de caché
-        this.syncInProgress = false;
+        this.dataCache = null; // cache en memoria
+        this.unsubscribe = null;
+        this.syncCallbacks = [];
     }
 
-    /**
-     * Establece el usuario y prepara la conexión
-     */
     async setUser(username) {
+        if (this.unsubscribe) {
+            this.unsubscribe();
+        }
+
         this.currentUser = username;
-        this.dataCache = null; // Limpiar caché al cambiar usuario
-        this.lastFetch = 0;
-        // Al cambiar de usuario, intentamos asegurar que existan datos en la nube
+        this.dataCache = null;
+
         await this.getData();
+        this.startRealtimeSync();
+
         return true;
     }
 
-    /**
-     * Obtiene los datos de Firestore con caché inteligente
-     */
+    startRealtimeSync() {
+        if (!this.currentUser) return;
+
+        const docRef = doc(db, "usuarios", this.currentUser);
+
+        this.unsubscribe = onSnapshot(
+            docRef,
+            (docSnap) => {
+                if (docSnap.exists()) {
+                    this.dataCache = docSnap.data().actividades;
+                    console.log("✓ Datos sincronizados desde Firebase");
+                    this.notifySync();
+                }
+            },
+            (error) => {
+                console.error("Error en listener de Firestore:", error);
+            }
+        );
+    }
+
+    notifySync() {
+        this.syncCallbacks.forEach(callback => {
+            try {
+                callback();
+            } catch (error) {
+                console.error("Error en callback de sincronización:", error);
+            }
+        });
+    }
+
+    onDataSync(callback) {
+        this.syncCallbacks.push(callback);
+        return () => {
+            this.syncCallbacks = this.syncCallbacks.filter(cb => cb !== callback);
+        };
+    }
+
     async getData() {
         if (!this.currentUser) return [];
 
-        // Si tenemos datos en caché y no ha pasado el tiempo, devolvemos caché
-        const now = Date.now();
-        if (this.dataCache && (now - this.lastFetch) < this.cacheDuration) {
+        if (this.dataCache) {
             return this.dataCache;
         }
 
@@ -54,38 +85,23 @@ class DataManager {
             const docSnap = await getDoc(docRef);
 
             if (docSnap.exists()) {
-                // Si el usuario ya tiene datos en la nube, los devolvemos
                 this.dataCache = docSnap.data().actividades;
-                this.lastFetch = now;
                 return this.dataCache;
             } else {
-                // Si es un usuario nuevo, cargamos el JSON por defecto y lo subimos
                 const defaultData = await this.loadDefaultData();
                 await this.saveToCloud(defaultData);
                 this.dataCache = defaultData;
-                this.lastFetch = now;
                 return defaultData;
             }
         } catch (error) {
             console.error("Error obteniendo datos de Firebase:", error);
-            // Si hay error pero tenemos caché, devolvemos el caché
             return this.dataCache || [];
         }
     }
 
-    /**
-     * Guarda los datos en Firestore y actualiza el caché
-     */
     async saveToCloud(data) {
         if (!this.currentUser) return false;
 
-        // Evitar sincronizaciones concurrentes
-        if (this.syncInProgress) {
-            console.warn("Sincronización en progreso, esperando...");
-            return false;
-        }
-
-        this.syncInProgress = true;
         try {
             const docRef = doc(db, "usuarios", this.currentUser);
             await setDoc(docRef, {
@@ -93,21 +109,14 @@ class DataManager {
                 lastUpdate: new Date().toISOString()
             });
 
-            // Actualizar caché localmente de inmediato
             this.dataCache = data;
-            this.lastFetch = Date.now();
             return true;
         } catch (error) {
             console.error("Error guardando en Firebase:", error);
             return false;
-        } finally {
-            this.syncInProgress = false;
         }
     }
 
-    /**
-     * Carga datos iniciales desde el archivo local
-     */
     async loadDefaultData() {
         try {
             const response = await fetch('./data.json');
@@ -118,9 +127,6 @@ class DataManager {
         }
     }
 
-    /**
-     * Actualiza las horas (Ahora guarda en la nube automáticamente)
-     */
     async updateActivityHours(activityTitle, timeframe, current, previous) {
         const data = await this.getData();
         const activity = data.find(item => item.title === activityTitle);
@@ -133,9 +139,6 @@ class DataManager {
         return false;
     }
 
-    /**
-     * Agrega horas a una actividad
-     */
     async addHoursToActivity(activityTitle, timeframe, hoursToAdd) {
         const data = await this.getData();
         const activity = data.find(item => item.title === activityTitle);
@@ -147,9 +150,6 @@ class DataManager {
         return false;
     }
 
-    /**
-     * Crea una nueva categoría
-     */
     async createActivity(title, color) {
         const data = await this.getData();
         if (data.find(item => item.title === title)) {
@@ -171,9 +171,6 @@ class DataManager {
         return { success, activity: newActivity };
     }
 
-    /**
-     * Elimina una actividad
-     */
     async deleteActivity(activityTitle) {
         const data = await this.getData();
         const filteredData = data.filter(item => item.title !== activityTitle);
@@ -184,36 +181,16 @@ class DataManager {
         return false;
     }
 
-    /**
-     * Agrega una nueva actividad
-     */
     async addActivity(activity) {
         const data = await this.getData();
         data.push(activity);
         return await this.saveToCloud(data);
     }
 
-    /**
-     * Registra una sesión de tiempo (opcional, para historial)
-     */
     async logTimeSession(activityTitle, hours) {
-        // Por ahora, solo guardamos los datos principales
-        // Si quieres historial detallado, necesitarías una colección extra
         return true;
     }
 
-    /**
-     * Invalida el caché forzando recarga desde Firebase
-     */
-    async invalidateCache() {
-        this.dataCache = null;
-        this.lastFetch = 0;
-        return await this.getData();
-    }
-
-    /**
-     * Exporta datos a JSON
-     */
     async exportToJSON() {
         const data = await this.getData();
         const dataStr = JSON.stringify(data, null, 2);
@@ -223,6 +200,14 @@ class DataManager {
         link.href = url;
         link.download = `backup-${this.currentUser}-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
+    }
+
+    disconnect() {
+        if (this.unsubscribe) {
+            this.unsubscribe();
+            this.unsubscribe = null;
+        }
+        this.syncCallbacks = [];
     }
 }
 
