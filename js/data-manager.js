@@ -118,14 +118,15 @@ class DataManager {
             });
 
             this.dataCache = data;
-            console.error("Error al guardar:", error); // <-- Esto te dirá si Firebase te bloqueó
+            // CAMBIO AQUÍ: Usa log y quita la variable 'error' que no existe aquí
+            console.log("✅ ¡Datos guardados en la nube con éxito!");
             return true;
         } catch (error) {
-            console.error("Error guardando en Firebase:", error);
+            // Aquí SÍ existe la variable error
+            console.error("❌ Error guardando en Firebase:", error);
             return false;
         }
     }
-
     async loadDefaultData() {
         try {
             const response = await fetch('./data.json');
