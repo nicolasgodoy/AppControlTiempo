@@ -910,6 +910,30 @@ class UIController {
         if (btnEnterUser) {
             btnEnterUser.onclick = () => this.handlePrivateLogin();
         }
+
+        const btnCloseX = document.getElementById('btnCloseUserModal');
+        const btnCancel = document.getElementById('btnCancelUserModal');
+        const modal = document.getElementById('userSelectionModal');
+
+        const closeModal = () => {
+            const currentUser = localStorage.getItem('currentUser');
+            // Si no hay usuario, no permitimos cerrar a menos que cancelen la acción de cambio
+            if (!currentUser) {
+                alert("Debes ingresar un usuario para continuar.");
+                return;
+            }
+            modal.style.display = 'none';
+        };
+
+        if (btnCloseX) btnCloseX.onclick = closeModal;
+        if (btnCancel) btnCancel.onclick = closeModal;
+
+        // También permitir cerrar haciendo click fuera
+        if (modal) {
+            modal.onclick = (e) => {
+                if (e.target === modal) closeModal();
+            };
+        }
     }
 
     /**

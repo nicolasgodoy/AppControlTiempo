@@ -157,8 +157,10 @@
   <!-- Modal Selección de Usuario (Privado) -->
   <div id="userSelectionModal" class="modal" style="display: none; background-color: rgba(0,0,0,0.95);">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
-      <div class="modal-header" style="justify-content: center;">
+      <div class="modal-header" style="justify-content: center; position: relative;">
         <h2 id="userModalTitle">Ingresar Usuario</h2>
+        <span id="btnCloseUserModal" class="modal-close"
+          style="position: absolute; right: 20px; top: 15px;">&times;</span>
       </div>
       <div class="modal-body">
         <div id="currentUserStatus" style="display: none; margin-bottom: 20px;">
@@ -193,6 +195,9 @@
         </div>
 
         <div id="loginStatus" style="margin-top: 10px; font-size: 13px; color: #ff6b35;"></div>
+      </div>
+      <div class="modal-footer" style="justify-content: center;">
+        <button id="btnCancelUserModal" class="btn-modal btn-cancel" style="width: 100%;">Cerrar / Cancelar</button>
       </div>
     </div>
   </div>
