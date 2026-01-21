@@ -22,16 +22,24 @@ class DataManager {
         this.syncCallbacks = [];
     }
 
-    async setUser(username) {
-        if (this.unsubscribe) {
-            this.unsubscribe();
-        }
-
+    async setUser(username, callback) {
         this.currentUser = username;
-        this.dataCache = null;
 
-        await this.getData();
-        this.startRealtimeSync();
+        // Creamos una "suscripción" al documento del usuario
+        const docRef = doc(db, "usuarios", this.currentUser);
+
+        // onSnapshot se ejecuta CADA VEZ que los datos cambian en la nube
+        onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const nuevasActividades = docSnap.data().actividades;
+                console.log("📱 Datos actualizados desde la nube...");
+
+                // Si le pasamos un callback (una función de la UI), actualizamos la pantalla
+                if (callback) {
+                    callback(nuevasActividades);
+                }
+            }
+        });
 
         return true;
     }

@@ -21,9 +21,10 @@ class UIController {
         ];
         this.initializeEventListeners();
 
-        this.dataManager.onDataSync(async () => {
-            console.log("📱 Datos actualizados desde otro dispositivo");
-            await this.renderCards();
+        this.dataManager.onDataSync(async (nuevosDatos) => {
+            console.log("📱 Sincronizando cambios desde la nube...");
+            // Renderizamos directamente con los datos que nos envía Firebase
+            await this.renderCards(nuevosDatos);
         });
     }
 
@@ -129,8 +130,9 @@ class UIController {
     /**
      * Renderiza las tarjetas de actividades
      */
-    async renderCards() {
-        const data = await this.dataManager.getData();
+    async renderCards(dataFromCloud = null) {
+        // Si vienen datos de la nube, los usamos. Si no, los pedimos al manager.
+        const data = dataFromCloud || await this.dataManager.getData();
         const sectionCards = document.querySelector('#sectionCards');
 
         if (!sectionCards) return;
@@ -448,9 +450,9 @@ class UIController {
             activity.timeframes.weekly = { current: 0, previous: 0 };
             activity.timeframes.monthly = { current: 0, previous: 0 };
 
-            // this.dataManager.saveToStorage(data); LOCAL
-            await this.dataManager.saveToCloud(data); // NUBE CON FIREBASE
-            await this.renderCards();
+            // Al guardar en la nube, el listener del constructor 
+            // se encargará de refrescar la UI automáticamente.
+            await this.dataManager.saveToCloud(data);
             this.showNotification(`✓ ${activityTitle} reseteada`);
         }
     }
