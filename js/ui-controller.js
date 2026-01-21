@@ -20,6 +20,7 @@ class UIController {
             'var(--gradient-6)'    // Salud
         ];
         this.initializeEventListeners();
+        this.setupRealtimeSync();
     }
 
     /**
