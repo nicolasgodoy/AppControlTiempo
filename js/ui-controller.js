@@ -742,6 +742,15 @@ class UIController {
         }
     }
 
+    setupRealtimeSync() {
+        // Registrar callback para cuando hay cambios desde Firebase
+        this.dataManager.onDataSync(async () => {
+            console.log("📱 Datos actualizados desde otro dispositivo");
+            // Re-renderizar las tarjetas cuando haya cambios
+            await this.renderCards();
+        });
+    }
+
     /**
      * Muestra el modal de selección de usuario
      */
