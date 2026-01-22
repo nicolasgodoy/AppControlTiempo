@@ -62,6 +62,16 @@ class UIController {
             });
         }
 
+        const btnExportExcel = document.querySelector('#btnExportExcel');
+        if (btnExportExcel) {
+            btnExportExcel.addEventListener('click', async () => {
+                const success = await this.dataManager.exportToExcel();
+                if (success) {
+                    this.showNotification('✓ Descarga de Excel iniciada');
+                }
+            });
+        }
+
         // Marcar el botón activo por defecto (ahora search for .filter-btn)
         this.setActiveButton(btnDay);
         // Create Activity Button

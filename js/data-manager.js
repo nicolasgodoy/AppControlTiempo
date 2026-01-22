@@ -362,6 +362,60 @@ class DataManager {
         data.push(activity);
         return await this.saveToCloud(data);
     }
+
+    // --- EXPORTACIÓN ---
+
+    async copyToClipboard() {
+        try {
+            const data = await this.getData();
+            if (!data || data.length === 0) return false;
+
+            // Header
+            let tsv = "Actividad\tDía (hrs)\tMes (hrs)\tAño (hrs)\n";
+
+            // Rows
+            data.forEach(activity => {
+                const daily = activity.timeframes.daily.current.toFixed(2);
+                const monthly = activity.timeframes.weekly.current.toFixed(2); // Usando 'weekly' como Mes por consistencia con el HTML
+                const yearly = activity.timeframes.monthly.current.toFixed(2); // Usando 'monthly' como Año por consistencia con el HTML
+                tsv += `${activity.title}\t${daily}\t${monthly}\t${yearly}\n`;
+            });
+
+            await navigator.clipboard.writeText(tsv);
+            return true;
+        } catch (error) {
+            console.error("Error al copiar al portapapeles:", error);
+            return false;
+        }
+    }
+
+    async exportToExcel() {
+        try {
+            const data = await this.getData();
+            if (!data || data.length === 0) return false;
+
+            // Preparar datos para XLSX
+            const rows = data.map(activity => ({
+                "Actividad": activity.title,
+                "Día (hrs)": activity.timeframes.daily.current,
+                "Mes (hrs)": activity.timeframes.weekly.current,
+                "Año (hrs)": activity.timeframes.monthly.current
+            }));
+
+            // Crear libro y hoja
+            const worksheet = XLSX.utils.json_to_sheet(rows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Actividades");
+
+            // Generar archivo y descargar
+            XLSX.writeFile(workbook, `Reporte_Tiempo_${new Date().toISOString().split('T')[0]}.xlsx`);
+            return true;
+        } catch (error) {
+            console.error("Error al exportar a Excel:", error);
+            alert("Error al exportar a Excel. Asegúrate de que la librería XLSX esté cargada.");
+            return false;
+        }
+    }
 }
 
 const dataManager = new DataManager();
