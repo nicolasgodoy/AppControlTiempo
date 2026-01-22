@@ -129,6 +129,27 @@ class UIController {
 
         const editHoursInput = document.getElementById('editHoursInput');
         if (editHoursInput) this.setupNumericInputValidation(editHoursInput, 5);
+
+        // Navigation Tabs
+        const tabDashboard = document.getElementById('tabDashboard');
+        const tabHistory = document.getElementById('tabHistory');
+        if (tabDashboard) tabDashboard.addEventListener('click', () => this.switchView('dashboard'));
+        if (tabHistory) tabHistory.addEventListener('click', () => this.switchView('history'));
+
+        // History Filters
+        const filterDate = document.getElementById('historyFilterDate');
+        const filterActivity = document.getElementById('historyFilterActivity');
+        if (filterDate) filterDate.addEventListener('change', () => this.renderHistoryTable());
+        if (filterActivity) filterActivity.addEventListener('change', () => this.renderHistoryTable());
+
+        // Pagination
+        const btnPrev = document.getElementById('btnPrevPage');
+        const btnNext = document.getElementById('btnNextPage');
+        if (btnPrev) btnPrev.addEventListener('click', () => this.changePage(-1));
+        if (btnNext) btnNext.addEventListener('click', () => this.changePage(1));
+
+        this.historyPage = 1;
+        this.historyPageSize = 10;
     }
 
     /**
@@ -189,8 +210,13 @@ class UIController {
 
             if (metadata) {
                 // El usuario ya existe, verificamos propiedad
-                if (!metadata.ownerToken || metadata.ownerToken === deviceToken) {
-                    // Es el dueño o es un perfil viejo sin token (lo reclamamos)
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+                if (!metadata.ownerToken || metadata.ownerToken === deviceToken || isLocal) {
+                    // Es el dueño, perfil viejo or estamos en LOCAL (bypass para pruebas)
+                    if (isLocal && metadata.ownerToken && metadata.ownerToken !== deviceToken) {
+                        console.log("ℹ️ Bypass de seguridad activado por estar en localhost");
+                    }
                     await this.handleUserLogin(name);
                 } else {
                     // Pertenece a otro dispositivo
@@ -338,45 +364,73 @@ class UIController {
             </div>
             
             <div class="card-content">
-                <div class="card-header">
-                    <div class="card-title">${activity.title}</div>
-                    <img src="./images/icon-ellipsis.svg" class="image-options" title="Opciones">
-                </div>
-                
-                <div class="card-stats">
-                    <div class="card-time">${this.formatHours(timeframe.current)}hrs</div>
-                    <div class="card-previous">${currentPreviousLabel} - ${this.formatHours(timeframe.previous)} hrs</div>
+                <!-- VIEW 1: STATS -->
+                <div class="card-view-stats">
+                    <div class="card-header">
+                        <div class="card-title">${activity.title}</div>
+                        <img src="./images/icon-ellipsis.svg" class="image-options" title="Opciones">
+                    </div>
                     
-                    ${hasTimer ? `
-                        <div class="timer-display" data-activity="${activity.title}">
-                             <span>${isPaused ? '⏸️' : '⏱️'}</span>
-                             <span class="timer-time">00:00:00</span>
-                        </div>
-                    ` : ''}
+                    <div class="card-stats">
+                        <div class="card-time">${this.formatHours(timeframe.current)}hrs</div>
+                        <div class="card-previous">${currentPreviousLabel} - ${this.formatHours(timeframe.previous)} hrs</div>
+                        
+                        ${hasTimer ? `
+                            <div class="timer-display" data-activity="${activity.title}">
+                                 <span>${isPaused ? '⏸️' : '⏱️'}</span>
+                                 <span class="timer-time">00:00:00</span>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="card-actions">
+                         ${!hasTimer ? `
+                            <button class="btn btn-start" data-activity="${activity.title}">
+                                ▶ Iniciar
+                            </button>
+                            <button class="btn btn-add" data-activity="${activity.title}">
+                                + Agregar
+                            </button>
+                         ` : `
+                            ${!isPaused ? `
+                                <button class="btn btn-pause" data-activity="${activity.title}" title="Pausar">
+                                    ⏸
+                                </button>
+                            ` : `
+                                <button class="btn btn-resume" data-activity="${activity.title}" title="Reanudar">
+                                    ▶
+                                </button>
+                            `}
+                            <button class="btn btn-stop" data-activity="${activity.title}" title="Detener">
+                                ⏹
+                            </button>
+                         `}
+                    </div>
+
+                    <!-- FOOTER TRIGGER -->
+                    <div class="card-notes-trigger" title="Ver historial de notas">
+                        <span class="trigger-label">📋 NOTAS</span>
+                        <span class="trigger-count">${timeframe.notes ? timeframe.notes.length : 0}</span>
+                    </div>
                 </div>
 
-                <div class="card-actions">
-                     ${!hasTimer ? `
-                        <button class="btn btn-start" data-activity="${activity.title}">
-                            ▶ Iniciar
-                        </button>
-                        <button class="btn btn-add" data-activity="${activity.title}">
-                            + Agregar
-                        </button>
-                     ` : `
-                        ${!isPaused ? `
-                            <button class="btn btn-pause" data-activity="${activity.title}" title="Pausar">
-                                ⏸
-                            </button>
-                        ` : `
-                            <button class="btn btn-resume" data-activity="${activity.title}" title="Reanudar">
-                                ▶
-                            </button>
-                        `}
-                        <button class="btn btn-stop" data-activity="${activity.title}" title="Detener">
-                            ⏹
-                        </button>
-                     `}
+                <!-- VIEW 2: NOTES (HIDDEN BY DEFAULT) -->
+                <div class="card-view-notes">
+                    <div class="notes-view-header">
+                        <button class="btn-back-stats" title="Volver a estadísticas">←</button>
+                        <span class="notes-view-title">${activity.title} - Notas</span>
+                    </div>
+                    
+                    <div class="notes-scroll-area">
+                        <ul class="notes-list">
+                            ${this.renderNotesList(timeframe.notes || [])}
+                        </ul>
+                    </div>
+
+                    <div class="add-note-container">
+                        <input type="text" class="note-input-premium" placeholder="Nueva nota..." data-activity="${activity.title}">
+                        <button class="btn-add-note" data-activity="${activity.title}" title="Agregar nota">+</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -411,6 +465,57 @@ class UIController {
         if (btnOptions) {
             btnOptions.addEventListener('click', (e) => {
                 this.showOptionsMenu(e, activity.title);
+            });
+        }
+
+        // Note: New Premium Notes View Toggle Listeners
+        const notesTrigger = card.querySelector('.card-notes-trigger');
+        const btnBack = card.querySelector('.btn-back-stats');
+
+        if (notesTrigger) {
+            notesTrigger.addEventListener('click', () => {
+                card.classList.add('showing-notes');
+            });
+        }
+
+        if (btnBack) {
+            btnBack.addEventListener('click', () => {
+                card.classList.remove('showing-notes');
+            });
+        }
+
+        // Note: New Premium Notes Listeners
+        const noteInputField = card.querySelector('.note-input-premium');
+        const btnAddNoteAtCard = card.querySelector('.btn-add-note');
+
+        const handleAddNote = async () => {
+            const text = noteInputField.value.trim();
+            if (text) {
+                await this.dataManager.addNoteToActivity(activity.title, text);
+                noteInputField.value = '';
+            }
+        };
+
+        if (btnAddNoteAtCard) {
+            btnAddNoteAtCard.addEventListener('click', handleAddNote);
+        }
+        if (noteInputField) {
+            noteInputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleAddNote();
+            });
+        }
+
+        // Delegación de eventos para borrar notas
+        const notesList = card.querySelector('.notes-list');
+        if (notesList) {
+            notesList.addEventListener('click', async (e) => {
+                const btnDelete = e.target.closest('.btn-delete-note');
+                if (btnDelete) {
+                    const timestamp = btnDelete.dataset.timestamp;
+                    if (confirm('¿Eliminar esta nota?')) {
+                        await this.dataManager.deleteNoteFromActivity(activity.title, timestamp);
+                    }
+                }
             });
         }
 
@@ -450,7 +555,7 @@ class UIController {
     async saveAddedTime() {
         const modal = document.getElementById('addTimeModal');
         const hoursInput = document.getElementById('hoursInput');
-        const notesInput = document.getElementById('notesInput');
+        const notesInput = document.getElementById('notesInput'); // Note: This is on the modal
 
         if (!modal || !hoursInput) return;
 
@@ -471,8 +576,12 @@ class UIController {
         );
 
         if (success) {
-            // Registrar la sesión
-            await this.dataManager.logTimeSession(activityTitle, hours);
+            // Obtener la nota actual de la card
+            const noteInput = document.querySelector(`.note-input[data-activity="${activityTitle}"]`);
+            const currentNote = noteInput ? noteInput.value : '';
+
+            // Registrar la sesión con la nota
+            await this.dataManager.logTimeSession(activityTitle, hours, currentNote);
 
             // Actualizar la vista
             await this.renderCards();
@@ -799,11 +908,17 @@ class UIController {
     async stopTimer(activityTitle) {
         const hours = await this.timerManager.stopTimer(activityTitle);
         if (hours !== null) {
+            // Obtener la nota actual de la card (del nuevo input premium)
+            const noteInput = document.querySelector(`.note-input-premium[data-activity="${activityTitle}"]`);
+            const currentNote = noteInput ? noteInput.value.trim() : '';
+
+            if (noteInput) noteInput.value = ''; // Limpiar después de guardar
+
             // Agregar las horas a la actividad
             await this.dataManager.addHoursToActivity(activityTitle, this.currentTimeframe, hours);
 
-            // Registrar la sesión
-            await this.dataManager.logTimeSession(activityTitle, hours);
+            // Registrar la sesión con la nota
+            await this.dataManager.logTimeSession(activityTitle, hours, currentNote);
 
             // Actualizar la vista
             await this.renderCards();
@@ -854,17 +969,21 @@ class UIController {
     }
 
     async initialize() {
-        // Verificar si hay un usuario guardado en LocalStorage (sesión persistente)
         const savedUser = localStorage.getItem('currentUser');
+
+        // Si estamos en modo local y no hay usuario, forzamos un estado básico
+        if (this.dataManager.isLocalMode && !savedUser) {
+            console.log("🛠️ Inicializando modo local sin usuario");
+            await this.renderCards();
+            return;
+        }
 
         if (savedUser) {
             await this.handleUserLogin(savedUser);
         } else {
-            // Mostrar modal de selección si no hay sesión iniciada
             await this.showUserSelectionModal();
         }
 
-        // Iniciar actualizaciones de timer si hay timers activos
         if (this.timerManager.getAllActiveTimers().length > 0) {
             this.startTimerUpdates();
         }
@@ -1107,17 +1226,161 @@ class UIController {
     }
 
     /**
-     * Ya no usamos handleCreateUser directamente, se integró en handlePrivateLogin
+     * Alterna entre vistas (Dashboard o Historial)
      */
+    switchView(viewName) {
+        const dashboard = document.getElementById('viewDashboard');
+        const history = document.getElementById('viewHistory');
+        const tabDash = document.getElementById('tabDashboard');
+        const tabHist = document.getElementById('tabHistory');
+
+        if (viewName === 'dashboard') {
+            dashboard.style.display = 'block';
+            history.style.display = 'none';
+            tabDash.classList.add('active');
+            tabHist.classList.remove('active');
+            this.renderCards();
+        } else {
+            dashboard.style.display = 'none';
+            history.style.display = 'block';
+            tabDash.classList.remove('active');
+            tabHist.classList.add('active');
+            this.renderHistoryTable();
+            this.populateActivityFilter();
+        }
+    }
+
+    /**
+     * Guarda la nota de una actividad para el período actual
+     */
+    async saveNote(activityTitle, note) {
+        if (!note.trim()) return;
+        await this.dataManager.addNoteToActivity(activityTitle, note);
+    }
+
+    /**
+     * Población de filtro de actividades en el historial
+     */
+    async populateActivityFilter() {
+        const select = document.getElementById('historyFilterActivity');
+        if (!select) return;
+
+        const data = await this.dataManager.getData();
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">Todas las actividades</option>';
+
+        data.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.title;
+            opt.textContent = a.title;
+            select.appendChild(opt);
+        });
+        select.value = currentVal;
+    }
+
+    /**
+     * Renderiza la tabla de historial con filtros y paginación
+     */
+    async renderHistoryTable() {
+        const tbody = document.getElementById('historyTableBody');
+        const filterDate = document.getElementById('historyFilterDate').value;
+        const filterActivity = document.getElementById('historyFilterActivity').value;
+
+        if (!tbody) return;
+
+        // Obtener sesiones vía DataManager (centralizado)
+        let sessions = await this.dataManager.getSessions();
+
+        // Aplicar filtros
+        let filtered = sessions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        if (filterDate) {
+            filtered = filtered.filter(s => s.timestamp.startsWith(filterDate));
+        }
+        if (filterActivity) {
+            filtered = filtered.filter(s => s.activity === filterActivity);
+        }
+
+        // Paginación
+        const total = filtered.length;
+        const start = (this.historyPage - 1) * this.historyPageSize;
+        const end = start + this.historyPageSize;
+        const pageData = filtered.slice(start, end);
+
+        // Actualizar UI paginación
+        const indicator = document.getElementById('pageIndicator');
+        if (indicator) indicator.textContent = `Pág ${this.historyPage} de ${Math.ceil(total / this.historyPageSize) || 1}`;
+
+        tbody.innerHTML = '';
+
+        if (pageData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #555; padding: 40px;">No hay registros para mostrar.</td></tr>';
+            return;
+        }
+
+        pageData.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div style="font-weight: 500;">${this.formatDate(s.timestamp)}</div>
+                    <div style="font-size: 11px; color: #666;">${new Date(s.timestamp).toLocaleTimeString()}</div>
+                </td>
+                <td><span class="badge-activity">${s.activity}</span></td>
+                <td><strong>${s.hours.toFixed(2)}</strong> hrs</td>
+                <td><div class="note-text-cell">${s.note || '-'}</div></td>
+                <td>
+                    <!-- Acciones futuras (borrar log, etc) -->
+                    <span style="color: #444; cursor: not-allowed;">⚙️</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    changePage(offset) {
+        this.historyPage += offset;
+        if (this.historyPage < 1) this.historyPage = 1;
+        this.renderHistoryTable();
+    }
+
+    /**
+     * Renders the list of notes for a card
+     */
+    renderNotesList(notes) {
+        if (!notes || notes.length === 0) {
+            return '<li class="note-item-empty">Sin notas para este período.</li>';
+        }
+
+        // Mostrar solo las últimas 5 notas
+        const latestNotes = notes.slice(0, 5);
+
+        return latestNotes.map(note => `
+            <li class="note-item">
+                <div class="note-body">
+                    <span class="note-text">${note.text}</span>
+                    <span class="note-date">${this.formatDate(note.timestamp)}</span>
+                </div>
+                <button class="btn-delete-note" data-timestamp="${note.timestamp}" title="Eliminar nota">
+                    &times;
+                </button>
+            </li>
+        `).join('');
+    }
+
+    formatDate(isoString) {
+        const d = new Date(isoString);
+        return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
     /**
      * Formats hours to prevent overflow (e.g., 2.50 or 32)
      */
     formatHours(hours) {
-        if (!hours) return '0';
-        // If whole number, return as is (string)
-        if (Number.isInteger(hours)) return hours.toString();
-        // If decimal, return max 2 decimals
-        return hours.toFixed(2).replace(/\.00$/, '');
+        if (!hours === undefined || hours === null) return '0';
+        const numHours = parseFloat(hours);
+        if (isNaN(numHours)) return '0';
+        if (Number.isInteger(numHours)) return numHours.toString();
+        return numHours.toFixed(2).replace(/\.00$/, '');
     }
 
 }

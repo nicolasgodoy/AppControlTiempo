@@ -6,20 +6,30 @@ import UIController from './ui-controller.js';
 
 // Inicializar la aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', async () => {
-    // Crear instancia del controlador de UI
-    const uiController = new UIController(dataManager);
-
-    // Inicializar la aplicación
-    await uiController.initialize();
-
-    // Configurar event listeners del modal
-    setupModalListeners(uiController);
-
-    // Configurar botones de exportar/importar
-    setupDataManagement();
-
-    // Configurar toggle de tema
+    // 1. Configurar toggle de tema PRIMERO para que responda siempre
     setupThemeToggle();
+
+    // 2. Detectar si queremos modo local (vía URL ?local=true)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('local') === 'true') {
+        dataManager.setLocalMode(true);
+        console.log("🛠️ Modo Local activado (usando data.json)");
+    }
+
+    // 3. Crear instancia del controlador de UI
+    const uiController = new UIController(dataManager);
+    window.uiController = uiController; // Exponer globalmente para cross-access
+
+    // 4. Inicializar datos
+    try {
+        await uiController.initialize();
+    } catch (e) {
+        console.error("Error al inicializar datos:", e);
+    }
+
+    // 5. Demás listeners
+    setupModalListeners(uiController);
+    setupDataManagement();
 });
 
 /**

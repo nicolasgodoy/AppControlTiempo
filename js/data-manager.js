@@ -16,12 +16,22 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// --- CONFIGURACIÓN DE MODO ---
+// MODO PRODUCCIÓN: ES_MODO_LOCAL = false (Usa Firebase Cloud)
+// MODO DESARROLLO: ES_MODO_LOCAL = true  (Usa data.json y localStorage)
+const ES_MODO_LOCAL = false;
+
 class DataManager {
     constructor() {
         this.currentUser = null;
         this.dataCache = null;
         this.unsubscribe = null;
         this.syncCallbacks = [];
+        this.isLocalMode = ES_MODO_LOCAL;
+    }
+
+    setLocalMode(value) {
+        this.isLocalMode = value;
     }
 
     // --- GESTIÓN DE USUARIOS EN LA NUBE ---
@@ -100,15 +110,17 @@ class DataManager {
         return true;
     }
 
-    startRealtimeSync() {
-        if (!this.currentUser) return;
+    async startRealtimeSync() {
+        if (this.isLocalMode || !this.currentUser) return;
+
         if (this.unsubscribe) this.unsubscribe();
 
         const docRef = doc(db, "usuarios", this.currentUser);
-        this.unsubscribe = onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
-                this.dataCache = docSnap.data().actividades;
-                this.notifySync(this.dataCache);
+        this.unsubscribe = onSnapshot(docRef, (doc) => {
+            if (doc.exists()) {
+                const data = doc.data().actividades;
+                this.dataCache = data;
+                this.notifySync(data);
             }
         }, (error) => {
             // Error en tiempo real silenciado
@@ -124,19 +136,59 @@ class DataManager {
     }
 
     async getData() {
+        // --- MODO LOCAL ---
+        if (this.isLocalMode) {
+            if (this.dataCache) return this.dataCache;
+            const localData = localStorage.getItem('local_activities');
+            if (localData) {
+                try {
+                    this.dataCache = JSON.parse(localData);
+                    this.migrateNotesFormat();
+                    return this.dataCache;
+                } catch (e) { console.error("Error al parsear local_activities", e); }
+            }
+
+            // Intentar cargar data.json
+            const defaultData = await this.loadDefaultData();
+            if (defaultData && defaultData.length > 0) {
+                this.dataCache = defaultData;
+                this.migrateNotesFormat();
+                return defaultData;
+            }
+
+            // Fallback absoluto si falla el fetch (ej. abriendo archivo local sin servidor)
+            return this.getHardcodedFallback();
+        }
+
+        // --- MODO PRODUCCIÓN (FIREBASE) ---
         if (!this.currentUser) return [];
         if (this.dataCache) return this.dataCache;
 
-        const docRef = doc(db, "usuarios", this.currentUser);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            this.dataCache = docSnap.data().actividades;
-            return this.dataCache;
+        try {
+            const docRef = doc(db, "usuarios", this.currentUser);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                this.dataCache = docSnap.data().actividades;
+                this.migrateNotesFormat(); // Asegurar formato de notas
+                return this.dataCache;
+            }
+        } catch (error) {
+            console.error("Error al obtener datos de Firebase:", error);
         }
         return [];
     }
 
     async saveToCloud(data) {
+        this.dataCache = data;
+
+        // --- MODO LOCAL ---
+        if (this.isLocalMode) {
+            localStorage.setItem('local_activities', JSON.stringify(data));
+            this.notifySync(data);
+            return true;
+        }
+
+        // --- MODO PRODUCCIÓN (FIREBASE) ---
         if (!this.currentUser) return false;
         try {
             const docRef = doc(db, "usuarios", this.currentUser);
@@ -144,33 +196,143 @@ class DataManager {
                 actividades: data,
                 lastUpdate: new Date().toISOString()
             }, { merge: true });
-            this.dataCache = data;
+            this.notifySync(data); // Notificar cambios
             return true;
         } catch (error) {
             return false;
         }
+        return false;
     }
 
     async loadDefaultData() {
         try {
             const response = await fetch('./data.json');
+            if (!response.ok) throw new Error('No se pudo cargar data.json');
             return await response.json();
-        } catch (e) { return []; }
+        } catch (e) {
+            console.warn("Fallo carga de data.json, usando hardcoded fallback. (Tip: Usar un servidor local como Live Server)");
+            return [];
+        }
     }
 
-    async logTimeSession(activityTitle, hours) {
+    getHardcodedFallback() {
+        return [
+            { "title": "Trabajo", "timeframes": { "daily": { "current": 5, "previous": 7 }, "weekly": { "current": 32, "previous": 36 }, "monthly": { "current": 103, "previous": 128 } } },
+            { "title": "Juego", "timeframes": { "daily": { "current": 1, "previous": 2 }, "weekly": { "current": 10, "previous": 8 }, "monthly": { "current": 23, "previous": 29 } } },
+            { "title": "Estudio", "timeframes": { "daily": { "current": 3, "previous": 1 }, "weekly": { "current": 6, "previous": 7 }, "monthly": { "current": 13, "previous": 19 } } }
+        ];
+    }
+
+    migrateNotesFormat() {
+        if (!this.dataCache) return;
+        this.dataCache.forEach(activity => {
+            ['daily', 'weekly', 'monthly'].forEach(period => {
+                if (activity.timeframes && activity.timeframes[period]) {
+                    if (activity.timeframes[period].note !== undefined) {
+                        const oldNote = activity.timeframes[period].note;
+                        activity.timeframes[period].notes = oldNote ? [{ text: oldNote, timestamp: new Date().toISOString() }] : [];
+                        delete activity.timeframes[period].note;
+                    }
+                    if (!activity.timeframes[period].notes) {
+                        activity.timeframes[period].notes = [];
+                    }
+                }
+            });
+        });
+    }
+
+    async addNoteToActivity(title, noteText) {
+        if (!noteText.trim()) return false;
+        const data = await this.getData();
+        const activity = data.find(a => a.title === title);
+        if (activity) {
+            const timeframe = window.uiController ? window.uiController.currentTimeframe : 'daily';
+            if (!activity.timeframes[timeframe].notes) {
+                activity.timeframes[timeframe].notes = [];
+            }
+            activity.timeframes[timeframe].notes.unshift({
+                text: noteText.trim(),
+                timestamp: new Date().toISOString()
+            });
+            return await this.saveToCloud(data);
+        }
+        return false;
+    }
+
+    async deleteNoteFromActivity(title, noteTimestamp) {
+        const data = await this.getData();
+        const activity = data.find(a => a.title === title);
+        if (activity) {
+            const timeframe = window.uiController ? window.uiController.currentTimeframe : 'daily';
+            if (activity.timeframes[timeframe].notes) {
+                activity.timeframes[timeframe].notes = activity.timeframes[timeframe].notes.filter(n => n.timestamp !== noteTimestamp);
+                return await this.saveToCloud(data);
+            }
+        }
+        return false;
+    }
+
+    async getSessions() {
+        if (this.isLocalMode) {
+            const localSessions = localStorage.getItem('local_sessions');
+            return localSessions ? JSON.parse(localSessions) : [];
+        }
+
+        if (!this.currentUser) return [];
+        try {
+            const docRef = doc(db, "usuarios", this.currentUser);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                return docSnap.data().sesiones || [];
+            }
+        } catch (error) {
+            console.error("Error al obtener sesiones:", error);
+        }
+        return [];
+    }
+
+    async logTimeSession(activityTitle, hours, note = "") {
+        const sessionData = {
+            activity: activityTitle,
+            hours: hours,
+            note: note,
+            timestamp: new Date().toISOString()
+        };
+
+        const data = await this.getData();
+        const activity = data.find(a => a.title === activityTitle);
+
+        if (this.isLocalMode) {
+            // Log for history table
+            const localSessions = await this.getSessions();
+            localSessions.push(sessionData);
+            localStorage.setItem('local_sessions', JSON.stringify(localSessions));
+
+            // Append to activity internal notes if present
+            if (activity && note.trim()) {
+                const timeframe = window.uiController ? window.uiController.currentTimeframe : 'daily';
+                if (!activity.timeframes[timeframe].notes) activity.timeframes[timeframe].notes = [];
+                activity.timeframes[timeframe].notes.unshift({ text: note.trim(), timestamp: new Date().toISOString() });
+                await this.saveToCloud(data);
+            }
+            return true;
+        }
+
         if (!this.currentUser) return false;
         try {
             const docRef = doc(db, "usuarios", this.currentUser);
-            const sessionData = {
-                activity: activityTitle,
-                hours: hours,
-                timestamp: new Date().toISOString()
-            };
-
+            // Add to session log
             await updateDoc(docRef, {
                 sesiones: arrayUnion(sessionData)
             });
+
+            // Append to activity internal notes if present
+            if (activity && note.trim()) {
+                const timeframe = window.uiController ? window.uiController.currentTimeframe : 'daily';
+                if (!activity.timeframes[timeframe].notes) activity.timeframes[timeframe].notes = [];
+                activity.timeframes[timeframe].notes.unshift({ text: note.trim(), timestamp: new Date().toISOString() });
+                await this.saveToCloud(data);
+            }
             return true;
         } catch (error) {
             return false;

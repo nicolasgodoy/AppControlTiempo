@@ -19,7 +19,12 @@
       </button>
     </div>
 
-    <div class="content">
+    <nav class="nav-menu">
+      <button id="tabDashboard" class="nav-tab active">📊 Dashboard</button>
+      <button id="tabHistory" class="nav-tab">🕒 Historial</button>
+    </nav>
+
+    <div class="Contenido-Lateral">
       <div class="sidebar">
         <div class="user-card">
           <div class="avatar">
@@ -52,9 +57,48 @@
         </div>
       </div>
 
-      <div class="grid" id="sectionCards">
-        <!-- Cards will be injected here by JS -->
-      </div>
+      <!-- Vista Dashboard (Cartas) -->
+      <main id="viewDashboard" class="vista-activa">
+        <section id="sectionCards" class="Contenido-Grid-Cards">
+          <!-- Las cards se inyectan aquí -->
+        </section>
+      </main>
+
+      <!-- Vista Historial (Tabla) -->
+      <main id="viewHistory" style="display: none;">
+        <section class="history-container">
+          <div class="history-controls">
+            <div class="filter-group">
+              <input type="date" id="historyFilterDate" class="input-hours" style="width: auto;">
+              <select id="historyFilterActivity" class="input-hours" style="width: auto;">
+                <option value="">Todas las actividades</option>
+              </select>
+            </div>
+            <div class="pagination-controls">
+              <button id="btnPrevPage" class="btn-timer" style="padding: 5px 15px;">&lt; Ant</button>
+              <span id="pageIndicator" style="color: #aaa; font-size: 14px;">Pág 1</span>
+              <button id="btnNextPage" class="btn-timer" style="padding: 5px 15px;">Sig &gt;</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Fecha / Hora</th>
+                  <th>Actividad</th>
+                  <th>Horas</th>
+                  <th>Nota</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <!-- Datos inyectados aquí -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
 
@@ -185,7 +229,7 @@
           Ingresa tu nombre de usuario para cargar tus actividades.
         </p>
 
-        <div <div
+        <div
           style="background: rgba(46, 204, 113, 0.1); border-left: 3px solid #2ecc71; padding: 10px; margin-bottom: 20px; text-align: left;">
           <p style="color: #a8f0c1; font-size: 12px; margin: 0; line-height: 1.4;">
             <strong>🔒 Seguridad activa:</strong> Tus perfiles están vinculados a este equipo. Otros no podrán borrar
@@ -221,7 +265,7 @@
 
   <footer class="Contenido-Footer"></footer>
 
-  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="./js/app.js"></script>
 
 </body>
 

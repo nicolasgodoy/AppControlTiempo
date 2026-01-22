@@ -54,7 +54,7 @@ body.light-mode {
     transform: scale(1.1);
 }
 
-.content {
+.Contenido-Lateral {
     display: grid;
     grid-template-columns: 280px 1fr;
     gap: 30px;
@@ -275,7 +275,7 @@ body.light-mode .export-btn {
    ============================
 */
 
-.grid {
+.Contenido-Grid-Cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 30px;
@@ -290,7 +290,9 @@ body.light-mode .export-btn {
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease;
-    min-height: 250px;
+    height: 310px;
+    /* Symmetry Fix: Updated to user preferred height */
+    position: relative;
 }
 
 .card:hover {
@@ -307,6 +309,31 @@ body.light-mode .card {
 body.light-mode .card:hover {
     background-color: #f8f9fa;
     transform: translateY(-5px);
+}
+
+body.light-mode .card-notes-trigger {
+    background: #f0f2f5;
+    border: 1px solid #eee;
+}
+
+body.light-mode .trigger-label {
+    color: #5d6790;
+}
+
+body.light-mode .notes-view-header {
+    border-bottom-color: #eee;
+}
+
+body.light-mode .notes-view-title {
+    color: #1a1a2e;
+}
+
+body.light-mode .btn-back-stats {
+    color: #aaa;
+}
+
+body.light-mode .btn-back-stats:hover {
+    color: #ff6b35;
 }
 
 /* Card Banner - Colored Top Section */
@@ -363,11 +390,12 @@ body.light-mode .card:hover {
 
 /* Card Content Area */
 .card-content {
-    padding: 25px 30px;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+    padding: 24px;
 }
 
 .card-header {
@@ -396,6 +424,409 @@ body.light-mode .card:hover {
 
 .card-stats {
     margin-bottom: 20px;
+}
+
+/* --- NAVEGACION Y TABS --- */
+.nav-menu {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    grid-column: 1 / -1;
+    margin-bottom: 30px;
+    padding-top: 10px;
+}
+
+.nav-tab {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #aaa;
+    padding: 12px 30px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+}
+
+.nav-tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.nav-tab.active {
+    background: var(--blue-accent, #5847eb);
+    color: white;
+    border-color: #5847eb;
+    box-shadow: 0 4px 20px rgba(88, 71, 235, 0.4);
+}
+
+body.light-mode .nav-tab {
+    background: white;
+    color: #555;
+    border-color: #ddd;
+}
+
+body.light-mode .nav-tab:hover {
+    color: #ff6b35;
+    background: #f8f9fa;
+}
+
+body.light-mode .nav-tab.active {
+    background: #ff6b35;
+    color: white;
+    border-color: #ff6b35;
+}
+
+/* --- HISTORIAL Y TABLAS --- */
+.history-container {
+    background: var(--card-bg, #1c1f4a);
+    border-radius: 20px;
+    padding: 30px;
+    min-height: 500px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+body.light-mode .history-container {
+    background: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.history-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.filter-group {
+    display: flex;
+    gap: 12px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+body.light-mode .table-responsive {
+    background: #f8f9fa;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: white;
+    font-size: 14px;
+}
+
+body.light-mode .history-table {
+    color: #1a1a2e;
+}
+
+.history-table th {
+    text-align: left;
+    padding: 18px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    color: #aaa;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+body.light-mode .history-table th {
+    background: #f0f2f5;
+    border-bottom-color: #ddd;
+    color: #666;
+}
+
+.history-table td {
+    padding: 18px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+body.light-mode .history-table td {
+    border-bottom-color: #eee;
+}
+
+.history-table tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+body.light-mode .history-table tr:hover {
+    background: rgba(0, 0, 0, 0.01);
+}
+
+.note-text-cell {
+    color: #aaa;
+    font-style: italic;
+    max-width: 300px;
+    white-space: normal;
+    line-height: 1.4;
+}
+
+body.light-mode .note-text-cell {
+    color: #666;
+}
+
+.badge-activity {
+    background: rgba(88, 71, 235, 0.2);
+    color: #bbc0ff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+body.light-mode .badge-activity {
+    background: #f0efff;
+    color: #5847eb;
+}
+
+/* --- ESTILO CARD NOTA --- */
+/* --- PREMIUM SWITCHABLE NOTES VIEW --- */
+.notes-view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-back-stats {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 5px;
+    transition: color 0.2s;
+}
+
+.btn-back-stats:hover {
+    color: var(--accent-color, #ff6b35);
+}
+
+.notes-view-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #eee;
+}
+
+.notes-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding-right: 5px;
+}
+
+/* Scrollbar styling */
+.notes-scroll-area::-webkit-scrollbar {
+    width: 4px;
+}
+
+.notes-scroll-area::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.notes-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+/* Footer Trigger for Notes */
+.card-notes-trigger {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.card-notes-trigger:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.trigger-label {
+    font-size: 12px;
+    color: #888;
+    font-weight: 600;
+}
+
+.trigger-count {
+    background: var(--accent-color, #ff6b35);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+/* Note List Styling */
+.notes-list {
+    list-style: none;
+    margin-top: 10px;
+}
+
+.note-item {
+    position: relative;
+    padding: 5px 25px 5px 20px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #eee;
+    line-height: 1.4;
+    border-left: 3px solid var(--accent-color, #ff6b35);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.note-body {
+    flex: 1;
+}
+
+.btn-delete-note {
+    background: transparent;
+    border: none;
+    color: #666;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    transition: color 0.2s;
+    opacity: 0;
+}
+
+.note-item:hover .btn-delete-note {
+    opacity: 1;
+}
+
+.btn-delete-note:hover {
+    color: #ff3366;
+}
+
+.note-item::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 14px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-color, #ff6b35);
+    opacity: 0.6;
+}
+
+.note-date {
+    display: block;
+    font-size: 10px;
+    color: #666;
+    margin-top: 4px;
+}
+
+/* Note Input Area */
+.add-note-container {
+    display: flex;
+    gap: 8px;
+}
+
+.note-input-premium {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.note-input-premium:focus {
+    border-color: var(--accent-color, #ff6b35);
+}
+
+.btn-add-note {
+    background: var(--accent-color, #ff6b35);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.btn-add-note:hover {
+    transform: scale(1.1);
+}
+
+/* Light Mode Overrides */
+body.light-mode .card-notes-wrapper {
+    background: #f8f9fa;
+    border-color: #eee;
+}
+
+body.light-mode .notes-header {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-mode .note-item {
+    background: white;
+    color: #333;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+body.light-mode .note-input-premium {
+    background: white;
+    border-color: #ddd;
+    color: #333;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* --- CLASES DE TRANSICION --- */
+.vista-oculta {
+    display: none !important;
+}
+
+.vista-activa {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .card-time {
@@ -638,17 +1069,17 @@ body.light-mode .input-notes {
 
 /* Responsive */
 @media (max-width: 1200px) {
-    .grid {
+    .Contenido-Grid-Cards {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 768px) {
-    .content {
+    .Contenido-Lateral {
         grid-template-columns: 1fr;
     }
 
-    .grid {
+    .Contenido-Grid-Cards {
         grid-template-columns: 1fr;
     }
 }
@@ -752,4 +1183,227 @@ body.light-mode .notification {
     color: #1a1a2e;
     border-color: rgba(0, 0, 0, 0.05);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Switchable Card View Core */
+.card-view-stats,
+.card-view-notes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-view-stats {
+    opacity: 1;
+    transform: translateX(0);
+    z-index: 2;
+    padding: 24px;
+}
+
+.card-view-notes {
+    opacity: 0;
+    transform: translateX(100%);
+    z-index: 1;
+    padding: 24px;
+}
+
+.card.showing-notes .card-view-stats {
+    opacity: 0;
+    transform: translateX(-100%);
+}
+
+.card.showing-notes .card-view-notes {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Light Mode Overrides for Switchable Views */
+body.light-mode .card-notes-trigger {
+    background: #f0f2f5 !important;
+    border: 1px solid #eee;
+}
+
+body.light-mode .trigger-label {
+    color: #5d6790;
+}
+
+body.light-mode .notes-view-header {
+    border-bottom-color: #eee;
+}
+
+body.light-mode .notes-view-title {
+    color: #1a1a2e;
+}
+
+body.light-mode .btn-back-stats {
+    color: #aaa;
+}
+
+body.light-mode .btn-back-stats:hover {
+    color: #ff6b35;
+}
+
+/* --- FINAL COMPACT REFINEMENTS --- */
+.card-content {
+    padding: 18px 22px !important;
+    gap: 8px;
+}
+
+.card-header {
+    margin-bottom: 8px !important;
+}
+
+.card-stats {
+    margin-bottom: 10px !important;
+}
+
+.card-time {
+    font-size: 28px !important;
+}
+
+.card-actions {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.card-notes-trigger {
+    margin-top: auto;
+    padding: 8px 12px !important;
+}
+
+.notes-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 180px;
+    margin-top: 5px;
+    padding-right: 5px;
+}
+
+/* Scrollbar Styling */
+.notes-scroll-area::-webkit-scrollbar {
+    width: 4px;
+}
+
+.notes-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+/* Enhanced Back Arrow */
+.btn-back-stats {
+    font-size: 22px !important;
+    font-weight: bold !important;
+    color: var(--accent-color, #ff6b35) !important;
+    opacity: 1 !important;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-back-stats:hover {
+    transform: scale(1.2);
+    filter: brightness(1.2);
+}
+
+/* --- HISTORY VIEW MODERNIZATION --- */
+.history-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.history-controls input[type="date"],
+.history-controls select {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white !important;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.history-controls input[type="date"]:focus,
+.history-controls select:focus {
+    border-color: #ff6b35 !important;
+    background: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Customize dropdown arrow and date icon */
+.history-controls select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 35px !important;
+}
+
+/* Pagination Styles */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+.pagination-controls button {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 6px;
+    padding: 6px 14px !important;
+    color: white !important;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: #ff6b35 !important;
+}
+
+.pagination-controls button:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+}
+
+.pagination-controls span {
+    color: rgba(255, 255, 255, 0.5) !important;
+    font-size: 13px;
+}
+
+/* Light Mode overrides for History UI */
+body.light-mode .history-controls {
+    background: #f8f9fa;
+    border-color: #eee;
+}
+
+body.light-mode .history-controls input[type="date"],
+body.light-mode .history-controls select,
+body.light-mode .pagination-controls button {
+    background: white !important;
+    border-color: #ddd !important;
+    color: #1a1a2e !important;
+}
+
+body.light-mode .history-controls select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%231a1a2e' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+}
+
+body.light-mode .pagination-controls span {
+    color: #888 !important;
 }
