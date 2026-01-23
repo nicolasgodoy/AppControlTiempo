@@ -583,13 +583,11 @@ class UIController {
     async saveAddedTime() {
         const modal = document.getElementById('addTimeModal');
         const hoursInput = document.getElementById('hoursInput');
-        const notesInput = document.getElementById('notesInput'); // Note: This is on the modal
 
         if (!modal || !hoursInput) return;
 
         const activityTitle = modal.dataset.activity;
         const hours = parseFloat(hoursInput.value);
-        const notes = notesInput ? notesInput.value : '';
 
         if (isNaN(hours) || hours <= 0) {
             alert('Por favor ingresa un número válido de horas');
@@ -604,12 +602,8 @@ class UIController {
         );
 
         if (success) {
-            // Obtener la nota actual de la card
-            const noteInput = document.querySelector(`.note-input[data-activity="${activityTitle}"]`);
-            const currentNote = noteInput ? noteInput.value : '';
-
-            // Registrar la sesión con la nota
-            await this.dataManager.logTimeSession(activityTitle, hours, currentNote);
+            // Registrar la sesión (sin nota redundante del modal)
+            await this.dataManager.logTimeSession(activityTitle, hours);
 
             // Actualizar la vista
             await this.renderCards();
@@ -1349,9 +1343,18 @@ class UIController {
         pageData.forEach(s => {
             const tr = document.createElement('tr');
             const isTask = s.isTask === true;
+
+            if (isTask) {
+                tr.classList.add('history-row-task');
+            }
+
             const typeBadge = isTask ?
-                '<span class="badge-task" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71; padding: 2px 8px; border-radius: 12px; font-size: 11px; border: 1px solid rgba(46, 204, 113, 0.2);">TAREA</span>' :
+                '<span class="badge-task" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71; padding: 2px 8px; border-radius: 12px; font-size: 11px; border: 1px solid rgba(46, 204, 113, 0.2);">COMPLETO</span>' :
                 '<span class="badge-time" style="background: rgba(52, 152, 219, 0.1); color: #3498db; padding: 2px 8px; border-radius: 12px; font-size: 11px; border: 1px solid rgba(52, 152, 219, 0.2);">SESIÓN</span>';
+
+            const hourDisplay = isTask ?
+                '<span style="font-size: 18px; display: block; text-align: center;">✅</span>' :
+                `<strong>${s.hours.toFixed(2)}</strong> <span style="font-size: 12px; opacity: 0.6;">hrs</span>`;
 
             tr.innerHTML = `
                 <td>
@@ -1360,8 +1363,8 @@ class UIController {
                 </td>
                 <td><span class="badge-activity">${s.activity}</span></td>
                 <td>${typeBadge}</td>
-                <td><strong style="${isTask ? 'color: #777;' : ''}">${s.hours.toFixed(2)}</strong> hrs</td>
-                <td><div class="note-text-cell" style="${isTask ? 'font-style: italic;' : ''}">${s.note || '-'}</div></td>
+                <td>${hourDisplay}</td>
+                <td><div class="note-text-cell" style="${isTask ? 'font-style: italic; opacity: 0.8;' : ''}">${s.note || '-'}</div></td>
                 <td>
                     <!-- Acciones futuras (borrar log, etc) -->
                     <span style="color: #444; cursor: not-allowed;">⚙️</span>

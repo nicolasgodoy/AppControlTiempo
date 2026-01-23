@@ -1469,3 +1469,15 @@ body.light-mode .pagination-controls span {
     font-weight: bold;
     letter-spacing: 0.5px;
 }
+
+.history-row-task {
+    background: rgba(46, 204, 113, 0.02) !important;
+}
+
+.history-row-task td {
+    opacity: 0.8;
+}
+
+body.light-mode .history-row-task {
+    background: #fdfdfd !important;
+}
