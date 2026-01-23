@@ -1407,3 +1407,65 @@ body.light-mode .history-controls select {
 body.light-mode .pagination-controls span {
     color: #888 !important;
 }
+
+/* --- CHECKBOX DE NOTAS --- */
+.note-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+}
+
+.note-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.note-checkbox:hover {
+    border-color: #2ecc71;
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.note-checkbox:checked {
+    background: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.note-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Animación de completado */
+.note-item.completing {
+    transform: translateX(40px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.note-item.completing .note-text {
+    text-decoration: line-through;
+    color: #666;
+}
+
+.badge-task {
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}

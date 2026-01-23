@@ -515,16 +515,34 @@ class UIController {
             });
         }
 
-        // Delegación de eventos para borrar notas
+        // Delegación de eventos para borrar o completar notas
         const notesList = card.querySelector('.notes-list');
         if (notesList) {
             notesList.addEventListener('click', async (e) => {
+                // Borrar Nota
                 const btnDelete = e.target.closest('.btn-delete-note');
                 if (btnDelete) {
                     const timestamp = btnDelete.dataset.timestamp;
                     if (confirm('¿Eliminar esta nota?')) {
                         await this.dataManager.deleteNoteFromActivity(activity.title, timestamp);
                     }
+                }
+
+                // Completar Nota (Checkbox)
+                const checkbox = e.target.closest('.note-checkbox');
+                if (checkbox && checkbox.checked) {
+                    const timestamp = checkbox.dataset.timestamp;
+                    const noteItem = checkbox.closest('.note-item');
+
+                    // Efecto visual antes de procesar
+                    noteItem.classList.add('completing');
+
+                    setTimeout(async () => {
+                        const success = await this.dataManager.completeNoteInActivity(activity.title, timestamp);
+                        if (success) {
+                            this.showNotification('✓ Tarea completada y guardada en el historial');
+                        }
+                    }, 600);
                 }
             });
         }
@@ -1330,14 +1348,20 @@ class UIController {
 
         pageData.forEach(s => {
             const tr = document.createElement('tr');
+            const isTask = s.isTask === true;
+            const typeBadge = isTask ?
+                '<span class="badge-task" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71; padding: 2px 8px; border-radius: 12px; font-size: 11px; border: 1px solid rgba(46, 204, 113, 0.2);">TAREA</span>' :
+                '<span class="badge-time" style="background: rgba(52, 152, 219, 0.1); color: #3498db; padding: 2px 8px; border-radius: 12px; font-size: 11px; border: 1px solid rgba(52, 152, 219, 0.2);">SESIÓN</span>';
+
             tr.innerHTML = `
                 <td>
                     <div style="font-weight: 500;">${this.formatDate(s.timestamp)}</div>
                     <div style="font-size: 11px; color: #666;">${new Date(s.timestamp).toLocaleTimeString()}</div>
                 </td>
                 <td><span class="badge-activity">${s.activity}</span></td>
-                <td><strong>${s.hours.toFixed(2)}</strong> hrs</td>
-                <td><div class="note-text-cell">${s.note || '-'}</div></td>
+                <td>${typeBadge}</td>
+                <td><strong style="${isTask ? 'color: #777;' : ''}">${s.hours.toFixed(2)}</strong> hrs</td>
+                <td><div class="note-text-cell" style="${isTask ? 'font-style: italic;' : ''}">${s.note || '-'}</div></td>
                 <td>
                     <!-- Acciones futuras (borrar log, etc) -->
                     <span style="color: #444; cursor: not-allowed;">⚙️</span>
@@ -1388,6 +1412,7 @@ class UIController {
 
         return latestNotes.map(note => `
             <li class="note-item">
+                <input type="checkbox" class="note-checkbox" data-timestamp="${note.timestamp}" title="Marcar como completada">
                 <div class="note-body">
                     <span class="note-text">${note.text}</span>
                     <span class="note-date">${this.formatDate(note.timestamp)}</span>

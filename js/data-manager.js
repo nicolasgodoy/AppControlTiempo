@@ -325,6 +325,35 @@ class DataManager {
         return false;
     }
 
+    /**
+     * Marca una nota como completada (Tarea), la elimina de la card y la guarda en el historial.
+     */
+    async completeNoteInActivity(title, noteTimestamp) {
+        const data = await this.getData();
+        const activity = data.find(a => a.title === title);
+        if (activity) {
+            const timeframe = window.uiController ? window.uiController.currentTimeframe : 'daily';
+            if (activity.timeframes[timeframe].notes) {
+                const noteIndex = activity.timeframes[timeframe].notes.findIndex(n => n.timestamp === noteTimestamp);
+                if (noteIndex !== -1) {
+                    const note = activity.timeframes[timeframe].notes[noteIndex];
+
+                    // 1. Eliminar de las notas activas
+                    activity.timeframes[timeframe].notes.splice(noteIndex, 1);
+
+                    // 2. Guardar el estado de las notas
+                    await this.saveToCloud(data);
+
+                    // 3. Registrar en sesiones como una Tarea (0 horas)
+                    await this.logTimeSession(title, 0, note.text, true); // true indica que es tarea
+
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     async getSessions() {
         if (this.isLocalMode) {
             const localSessions = localStorage.getItem('local_sessions');
@@ -344,11 +373,12 @@ class DataManager {
         return [];
     }
 
-    async logTimeSession(activityTitle, hours, note = "") {
+    async logTimeSession(activityTitle, hours, note = "", isTask = false) {
         const sessionData = {
             activity: activityTitle,
             hours: hours,
             note: note,
+            isTask: isTask,
             timestamp: new Date().toISOString()
         };
 
@@ -361,8 +391,8 @@ class DataManager {
             localSessions.push(sessionData);
             localStorage.setItem('local_sessions', JSON.stringify(localSessions));
 
-            // Append to activity internal notes if present
-            if (activity && note.trim()) {
+            // Append to activity internal notes if present (solo si tiene nota y NO es una tarea que acabamos de marcar como completada)
+            if (activity && note.trim() && !isTask) {
                 const timeframe = window.uiController ? window.uiController.currentTimeframe : 'daily';
                 if (!activity.timeframes[timeframe].notes) activity.timeframes[timeframe].notes = [];
                 activity.timeframes[timeframe].notes.unshift({ text: note.trim(), timestamp: new Date().toISOString() });
@@ -380,7 +410,7 @@ class DataManager {
             });
 
             // Append to activity internal notes if present
-            if (activity && note.trim()) {
+            if (activity && note.trim() && !isTask) {
                 const timeframe = window.uiController ? window.uiController.currentTimeframe : 'daily';
                 if (!activity.timeframes[timeframe].notes) activity.timeframes[timeframe].notes = [];
                 activity.timeframes[timeframe].notes.unshift({ text: note.trim(), timestamp: new Date().toISOString() });
