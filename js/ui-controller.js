@@ -420,7 +420,7 @@ class UIController {
                     <!-- FOOTER TRIGGER -->
                     <div class="card-notes-trigger" title="Ver historial de notas">
                         <span class="trigger-label">📋 NOTAS</span>
-                        <span class="trigger-count">${timeframe.notes ? timeframe.notes.length : 0}</span>
+                        <span class="trigger-count">${this.getFilteredNotes(timeframe.notes || []).length}</span>
                     </div>
                 </div>
 
@@ -1378,30 +1378,30 @@ class UIController {
     }
 
     /**
-     * Renders the list of notes for a card
+     * Filtra una lista de notas según el período calendario actual
      */
-    renderNotesList(notes) {
-        if (!notes || notes.length === 0) {
-            return '<li class="note-item-empty">Sin notas para este período.</li>';
-        }
+    getFilteredNotes(notes) {
+        if (!notes || notes.length === 0) return [];
 
         const now = new Date();
-
-        // Filtrar notas según el periodo calendario actual
-        const filteredNotes = notes.filter(note => {
+        return notes.filter(note => {
             const noteDate = new Date(note.timestamp);
             if (this.currentTimeframe === 'daily') {
-                // Solo hoy
                 return noteDate.toDateString() === now.toDateString();
             } else if (this.currentTimeframe === 'weekly') {
-                // Solo este mes (recordar: 'weekly' ID = 'Mes')
                 return noteDate.getMonth() === now.getMonth() && noteDate.getFullYear() === now.getFullYear();
             } else if (this.currentTimeframe === 'monthly') {
-                // Solo este año (recordar: 'monthly' ID = 'Anio')
                 return noteDate.getFullYear() === now.getFullYear();
             }
             return true;
         });
+    }
+
+    /**
+     * Renders the list of notes for a card
+     */
+    renderNotesList(notes) {
+        const filteredNotes = this.getFilteredNotes(notes);
 
         if (filteredNotes.length === 0) {
             return '<li class="note-item-empty">No hay notas para este periodo.</li>';
