@@ -1361,8 +1361,30 @@ class UIController {
             return '<li class="note-item-empty">Sin notas para este período.</li>';
         }
 
-        // Mostrar solo las últimas 5 notas
-        const latestNotes = notes.slice(0, 5);
+        const now = new Date();
+
+        // Filtrar notas según el periodo calendario actual
+        const filteredNotes = notes.filter(note => {
+            const noteDate = new Date(note.timestamp);
+            if (this.currentTimeframe === 'daily') {
+                // Solo hoy
+                return noteDate.toDateString() === now.toDateString();
+            } else if (this.currentTimeframe === 'weekly') {
+                // Solo este mes (recordar: 'weekly' ID = 'Mes')
+                return noteDate.getMonth() === now.getMonth() && noteDate.getFullYear() === now.getFullYear();
+            } else if (this.currentTimeframe === 'monthly') {
+                // Solo este año (recordar: 'monthly' ID = 'Anio')
+                return noteDate.getFullYear() === now.getFullYear();
+            }
+            return true;
+        });
+
+        if (filteredNotes.length === 0) {
+            return '<li class="note-item-empty">No hay notas para este periodo.</li>';
+        }
+
+        // Mostrar solo las últimas 5 notas filtradas
+        const latestNotes = filteredNotes.slice(0, 5);
 
         return latestNotes.map(note => `
             <li class="note-item">

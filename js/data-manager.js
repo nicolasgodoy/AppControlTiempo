@@ -136,54 +136,108 @@ class DataManager {
     }
 
     async getData() {
+        let data = [];
+        let metadata = null;
+
         // --- MODO LOCAL ---
         if (this.isLocalMode) {
-            if (this.dataCache) return this.dataCache;
             const localData = localStorage.getItem('local_activities');
             if (localData) {
                 try {
-                    this.dataCache = JSON.parse(localData);
-                    this.migrateNotesFormat();
-                    return this.dataCache;
+                    data = JSON.parse(localData);
                 } catch (e) { console.error("Error al parsear local_activities", e); }
+            } else {
+                data = await this.loadDefaultData();
+                if (!data || data.length === 0) data = this.getHardcodedFallback();
             }
-
-            // Intentar cargar data.json
-            const defaultData = await this.loadDefaultData();
-            if (defaultData && defaultData.length > 0) {
-                this.dataCache = defaultData;
-                this.migrateNotesFormat();
-                return defaultData;
+            // Metadata local simulada
+            metadata = { lastUpdate: localStorage.getItem('local_last_update') };
+        } else {
+            // --- MODO PRODUCCIÓN (FIREBASE) ---
+            if (!this.currentUser) return [];
+            try {
+                const docRef = doc(db, "usuarios", this.currentUser);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const docData = docSnap.data();
+                    data = docData.actividades || [];
+                    metadata = { lastUpdate: docData.lastUpdate };
+                }
+            } catch (error) {
+                console.error("Error al obtener datos de Firebase:", error);
+                return [];
             }
-
-            // Fallback absoluto si falla el fetch (ej. abriendo archivo local sin servidor)
-            return this.getHardcodedFallback();
         }
 
-        // --- MODO PRODUCCIÓN (FIREBASE) ---
-        if (!this.currentUser) return [];
-        if (this.dataCache) return this.dataCache;
+        // Aplicar lógica de reset/rollover si es necesario
+        const modified = this.checkAndResetTimeframes(data, metadata);
+        this.dataCache = data;
+        this.migrateNotesFormat();
 
-        try {
-            const docRef = doc(db, "usuarios", this.currentUser);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                this.dataCache = docSnap.data().actividades;
-                this.migrateNotesFormat(); // Asegurar formato de notas
-                return this.dataCache;
-            }
-        } catch (error) {
-            console.error("Error al obtener datos de Firebase:", error);
+        if (modified) {
+            await this.saveToCloud(data);
         }
-        return [];
+
+        return data;
+    }
+
+    /**
+     * Verifica si ha cambiado el día/semana/mes y realiza el rollover de horas.
+     */
+    checkAndResetTimeframes(data, metadata) {
+        if (!metadata || !metadata.lastUpdate || !data || data.length === 0) return false;
+
+        const lastDate = new Date(metadata.lastUpdate);
+        const nowDate = new Date();
+
+        // Si es el mismo día, no hacemos nada
+        if (lastDate.toDateString() === nowDate.toDateString()) return false;
+
+        let needsUpdate = false;
+
+        // Diferencias
+        const isNewDay = lastDate.toDateString() !== nowDate.toDateString();
+        const isNewMonth = lastDate.getMonth() !== nowDate.getMonth() || lastDate.getFullYear() !== nowDate.getFullYear();
+        const isNewYear = lastDate.getFullYear() !== nowDate.getFullYear();
+
+        data.forEach(activity => {
+            if (!activity.timeframes) return;
+
+            // Rollover Diario (Día anterior)
+            if (isNewDay) {
+                activity.timeframes.daily.previous = activity.timeframes.daily.current;
+                activity.timeframes.daily.current = 0;
+                needsUpdate = true;
+            }
+
+            // Rollover Mensual (Mes anterior)
+            // Nota: El HTML usa 'Mes' para el ID del botón que dispara 'weekly'
+            if (isNewMonth) {
+                activity.timeframes.weekly.previous = activity.timeframes.weekly.current;
+                activity.timeframes.weekly.current = 0;
+                needsUpdate = true;
+            }
+
+            // Rollover Anual (Año anterior)
+            // Nota: El HTML usa 'Anio' para el botón que dispara 'monthly'
+            if (isNewYear) {
+                activity.timeframes.monthly.previous = activity.timeframes.monthly.current;
+                activity.timeframes.monthly.current = 0;
+                needsUpdate = true;
+            }
+        });
+
+        return needsUpdate;
     }
 
     async saveToCloud(data) {
         this.dataCache = data;
+        const now = new Date().toISOString();
 
         // --- MODO LOCAL ---
         if (this.isLocalMode) {
             localStorage.setItem('local_activities', JSON.stringify(data));
+            localStorage.setItem('local_last_update', now);
             this.notifySync(data);
             return true;
         }
@@ -194,14 +248,13 @@ class DataManager {
             const docRef = doc(db, "usuarios", this.currentUser);
             await setDoc(docRef, {
                 actividades: data,
-                lastUpdate: new Date().toISOString()
+                lastUpdate: now
             }, { merge: true });
             this.notifySync(data); // Notificar cambios
             return true;
         } catch (error) {
             return false;
         }
-        return false;
     }
 
     async loadDefaultData() {
