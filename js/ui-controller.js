@@ -107,8 +107,13 @@ class UIController {
         }
 
         const btnLogout = document.getElementById('btnLogout');
+        const btnHeaderLogout = document.getElementById('btnHeaderLogout');
+
         if (btnLogout) {
             btnLogout.addEventListener('click', () => this.handleLogout());
+        }
+        if (btnHeaderLogout) {
+            btnHeaderLogout.addEventListener('click', () => this.handleLogout());
         }
 
         const btnDeleteAccount = document.getElementById('btnDeleteAccount');

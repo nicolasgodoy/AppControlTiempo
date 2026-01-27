@@ -30,6 +30,37 @@ body.light-mode {
     margin-bottom: 40px;
 }
 
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-logout-header {
+    background: rgba(255, 51, 102, 0.1);
+    color: #ff3366;
+    border: 1px solid rgba(255, 51, 102, 0.2);
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.btn-logout-header:hover {
+    background: #ff3366;
+    color: white;
+}
+
+.user-icon-mobile {
+    color: #bbc0ff;
+    display: flex;
+    align-items: center;
+}
+
 .title {
     font-size: 32px;
     font-weight: bold;
@@ -1075,12 +1106,204 @@ body.light-mode .input-notes {
 }
 
 @media (max-width: 768px) {
+    body {
+        padding: 15px;
+        background: #0f1021;
+    }
+
+    .container {
+        padding: 0;
+    }
+
+    .header {
+        margin-bottom: 20px !important;
+        padding: 0 5px;
+    }
+
+    .title {
+        font-size: 18px !important;
+        color: white;
+        font-weight: 700;
+        letter-spacing: -0.2px;
+    }
+
+    /* Navigation Tabs - Pill Style from Screenshot */
+    .nav-menu {
+        background: rgba(28, 32, 75, 0.4);
+        padding: 8px;
+        border-radius: 30px;
+        margin-bottom: 30px !important;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        grid-column: span 2;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-tab {
+        flex: 1;
+        padding: 12px 10px !important;
+        font-size: 13px !important;
+        border-radius: 25px !important;
+        border: none !important;
+        background: transparent !important;
+        color: rgba(165, 180, 252, 0.8) !important;
+        display: flex;
+        flex-direction: row !important;
+        gap: 8px !important;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        width: auto !important;
+        margin: 0 !important;
+    }
+
+    .nav-tab.active {
+        background: #5847eb !important;
+        color: white !important;
+        box-shadow: 0 0 15px rgba(88, 71, 235, 0.6) !important;
+    }
+
     .Contenido-Lateral {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .sidebar {
+        width: 100%;
+        gap: 0;
+    }
+
+    /* User Card - Centered */
+    .user-card {
+        padding: 40px 20px !important;
+        border-radius: 24px !important;
+        background: #1c204b !important;
+        margin-bottom: 25px;
+        align-items: center !important;
+        text-align: center !important;
+    }
+
+    .avatar-content {
+        width: 120px !important;
+        height: 120px !important;
+        font-size: 56px !important;
+        border-width: 4px !important;
+        box-shadow: 0 0 0 4px #49507a !important;
+        margin-bottom: 30px !important;
+    }
+
+    .user-name {
+        font-size: 38px !important;
+        margin-bottom: 30px !important;
+        font-weight: 300 !important;
+        text-align: center !important;
+    }
+
+    /* Filter Pill List in Mobile */
+    .time-filters {
+        background: #0d1323 !important;
+        padding: 10px !important;
+        border-radius: 20px !important;
+        width: 100% !important;
+        max-width: 320px;
+    }
+
+    /* Action Buttons - Massive Full Width */
+    .export-buttons {
+        gap: 12px !important;
+        margin-top: 5px;
+    }
+
+    .export-btn {
+        width: 100% !important;
+        padding: 20px !important;
+        border-radius: 18px !important;
+        font-size: 17px !important;
+        font-weight: 700 !important;
+        justify-content: center !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Override colors to match requested "Ventas" style */
+    #btnCreateActivity {
+        background: #ff8c42 !important;
+        /* Orange */
+        color: white !important;
+    }
+
+    #btnCopy {
+        background: #20e2d7 !important;
+        /* Cyan */
+        color: #0f172a !important;
+    }
+
+    #btnExportExcel {
+        background: #44d16e !important;
+        /* Green */
+        color: #0f172a !important;
+    }
+
+    /* --- HISTORIAL ULTRA COMPACTO --- */
+    .history-container {
+        padding: 10px 8px !important;
+        border-radius: 12px !important;
+        margin-top: 10px !important;
+        background: #1c204b !important;
+        min-height: auto !important;
+    }
+
+    .history-controls {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+        margin-bottom: 15px !important;
+    }
+
+    .filter-group {
+        width: 100% !important;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        flex: 1 !important;
+        height: 42px !important;
+        font-size: 12px !important;
+    }
+
+    .table-responsive {
+        margin: 0;
+        border-radius: 8px;
+    }
+
+    .history-table {
+        min-width: 480px;
+    }
+
+    .history-table th {
+        font-size: 10px !important;
+        padding: 10px 4px !important;
+        color: #818cf8 !important;
+        background: rgba(0, 0, 0, 0.15);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .history-table td {
+        padding: 8px 4px !important;
+        font-size: 11px !important;
+    }
+
+    .badge-activity {
+        padding: 2px 5px !important;
+        font-size: 9px !important;
     }
 
     .Contenido-Grid-Cards {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
     }
 }
 
